@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TBM — Ring Key Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c10;--panel:#0f1318;--panel2:#141920;--border:#1e2730;--accent:#00e5ff;--accent2:#ff6b35;--accent3:#7fff6b;--text:#cdd6e0;--muted:#4a5568;--warn:#ffcc00;--danger:#ff4444;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Barlow Condensed',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,.012) 2px,rgba(0,229,255,.012) 4px);pointer-events:none;z-index:0;}
+.wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:20px;}
+
+header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px;}
+.hl .lbl{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--accent);}
+.hl h1{font-size:36px;font-weight:900;color:#fff;line-height:1.1;}.hl h1 span{color:var(--accent);}
+.hr{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);text-align:right;line-height:1.8;}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent3);box-shadow:0 0 8px var(--accent3);margin-right:4px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.tabs{display:flex;gap:0;border:1px solid var(--border);margin-bottom:18px;overflow:hidden;}
+.tab{flex:1;padding:11px;text-align:center;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);background:var(--panel2);transition:all .15s;border-right:1px solid var(--border);}
+.tab:last-child{border-right:none;}.tab:hover{color:var(--text);}.tab.active{background:var(--panel);color:var(--accent);border-bottom:2px solid var(--accent);}
+.tabcontent{display:none;}.tabcontent.show{display:block;}
+
+.panel{background:var(--panel);border:1px solid var(--border);padding:18px;position:relative;margin-bottom:14px;}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);}
+.panel.warn-panel::before{background:linear-gradient(90deg,var(--warn),transparent);}
+.ptitle{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.ptitle::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.g2{display:grid;grid-template-columns:360px 1fr;gap:16px;}
+.g2f{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+@media(max-width:900px){.g2,.g3{grid-template-columns:1fr;}}
+
+.field{margin-bottom:11px;}
+.field label{display:block;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;font-family:'Share Tech Mono',monospace;}
+input[type=number],select{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:18px;padding:8px 11px;outline:none;transition:border-color .2s;appearance:none;}
+input:focus,select:focus{border-color:var(--accent);}
+select{cursor:pointer;font-size:13px;}select option{background:#1a1f28;}
+.divider{height:1px;background:var(--border);margin:11px 0;}
+
+.key-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:11px;}
+.key-btn{background:var(--panel2);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:12px;padding:7px 3px;cursor:pointer;transition:all .15s;text-align:center;}
+.key-btn:hover{border-color:var(--accent);color:var(--accent);}
+.key-btn.active.L-type{background:var(--accent);border-color:var(--accent);color:#000;font-weight:bold;}
+.key-btn.active.R-type{background:var(--accent2);border-color:var(--accent2);color:#000;font-weight:bold;}
+
+.ctbl-wrap{border:1px solid var(--border);margin-bottom:10px;overflow:hidden;}
+.ctbl{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:12px;}
+.ctbl th{background:var(--panel2);padding:5px 7px;text-align:center;color:var(--muted);font-size:9px;border-bottom:1px solid var(--border);font-weight:normal;}
+.ctbl td{padding:5px 7px;text-align:center;border-bottom:1px solid rgba(30,39,48,.5);cursor:pointer;transition:background .1s;}
+.ctbl tr:last-child td{border-bottom:none;}.ctbl tr:hover td{background:rgba(0,229,255,.04);}
+.ctbl tr.sel td{background:rgba(0,229,255,.09)!important;}.ctbl tr.sel td:first-child{color:var(--accent);font-weight:bold;}
+.rv{color:#7dffb3;}.lv{color:#ff9966;}.dv{color:var(--warn);}
+
+.dir-tog{display:flex;gap:6px;margin-bottom:10px;}
+.dir-btn{flex:1;padding:8px 4px;text-align:center;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:12px;border:1px solid var(--border);color:var(--muted);transition:all .15s;background:var(--panel2);}
+.dir-btn:hover{border-color:var(--accent);color:var(--accent);}
+.dir-btn.aR{background:rgba(0,229,255,.1);border-color:var(--accent);color:var(--accent);}
+.dir-btn.aL{background:rgba(255,107,53,.1);border-color:var(--accent2);color:var(--accent2);}
+.dir-btn.aS{background:rgba(127,255,107,.1);border-color:var(--accent3);color:var(--accent3);}
+
+.cv-prev{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:11px;}
+.cv-cell{background:var(--panel2);padding:7px 9px;text-align:center;}
+.cv-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:2px;font-family:'Share Tech Mono',monospace;}
+.cv-val{font-size:15px;font-family:'Share Tech Mono',monospace;}
+
+.calc-btn{width:100%;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:4px;text-transform:uppercase;padding:12px;cursor:pointer;transition:all .2s;margin-top:4px;}
+.calc-btn:hover{background:var(--accent);color:#000;}
+.calc-btn.wb{border-color:var(--warn);color:var(--warn);}.calc-btn.wb:hover{background:var(--warn);color:#000;}
+
+.statebox{display:grid;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:11px;}
+.sc{background:var(--panel2);padding:9px 11px;}
+.sc .sl{font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;font-family:'Share Tech Mono',monospace;}
+.sc .sv{font-size:18px;color:#fff;font-weight:bold;font-family:'Share Tech Mono',monospace;}
+
+.seg-tbl{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:10px;}
+.seg-tbl th{text-align:center;padding:5px 7px;color:var(--muted);font-size:9px;border-bottom:1px solid var(--border);font-weight:normal;white-space:nowrap;}
+.seg-tbl th.tl{text-align:left;padding-left:10px;}
+.seg-tbl td{padding:7px 7px;border-bottom:1px solid rgba(30,39,48,.5);text-align:center;vertical-align:middle;}
+.seg-tbl tr:hover td{background:rgba(0,229,255,.03);}
+.seg-tbl tr.best-row td{background:rgba(127,255,107,.05);}
+.kc{font-size:16px;font-weight:900;text-align:left!important;padding-left:10px!important;}
+.kc.L{color:var(--accent);}.kc.R{color:var(--accent2);}
+.vp2{color:#7dffb3;}.vn2{color:#ff7d7d;}.vz2{color:var(--text);}
+.srl{color:var(--accent);}.sll{color:var(--accent2);}
+.slu{color:#a78bfa;}.soh{color:var(--warn);}
+.fbox{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);padding:8px 10px;border:1px solid var(--border);line-height:1.9;margin-top:8px;}
+.no-result{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);text-align:center;padding:32px;border:1px dashed var(--border);}
+
+/* ---- ALIGNMENT EDITOR ---- */
+.aln-table{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:15px;margin-bottom:12px;}
+.aln-table th{background:var(--panel2);padding:10px 12px;color:var(--muted);font-size:10px;letter-spacing:1px;border-bottom:1px solid var(--border);text-align:center;font-weight:normal;white-space:nowrap;}
+.aln-table td{padding:6px 6px;border-bottom:1px solid rgba(30,39,48,.4);vertical-align:middle;}
+.aln-table tr:last-child td{border-bottom:none;}
+.aln-table input{font-size:18px;padding:10px 10px;width:100%;min-width:80px;}
+.aln-table select{font-size:16px;padding:10px 8px;width:100%;}
+.type-badge{display:inline-block;padding:2px 7px;font-size:10px;letter-spacing:1px;border:1px solid;}
+.badge-ST{border-color:var(--muted);color:var(--muted);}
+.badge-TC{border-color:var(--warn);color:var(--warn);}
+.badge-CR{border-color:var(--accent);color:var(--accent);}
+.badge-TCo{border-color:#ff9966;color:#ff9966;}
+.del-btn{background:none;border:1px solid var(--danger);color:var(--danger);cursor:pointer;padding:4px 9px;font-family:'Share Tech Mono',monospace;font-size:11px;transition:all .15s;}
+.del-btn:hover{background:var(--danger);color:#000;}
+.add-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.add-btn{padding:8px 14px;background:var(--panel2);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;letter-spacing:1px;}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);}
+.add-btn.warn:hover{border-color:var(--warn);color:var(--warn);}
+
+/* KEY PLAN TABLE */
+.kp-scroll{max-height:600px;overflow-y:auto;}
+.kp-scroll::-webkit-scrollbar{width:4px;}.kp-scroll::-webkit-scrollbar-thumb{background:var(--border);}
+.kp-tbl{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:12px;}
+.kp-tbl th{position:sticky;top:0;background:var(--panel2);padding:6px 7px;color:var(--muted);font-size:9px;letter-spacing:1px;border-bottom:1px solid var(--border);font-weight:normal;text-align:center;z-index:2;white-space:nowrap;}
+.kp-tbl td{padding:5px 7px;border-bottom:1px solid rgba(30,39,48,.35);text-align:center;white-space:nowrap;}
+.kp-tbl tr.rST td{background:rgba(255,255,255,.01);}
+.kp-tbl tr.rTC td{background:rgba(255,204,0,.04);}
+.kp-tbl tr.rCR td{background:rgba(0,229,255,.02);}
+.kp-tbl tr.rTCo td{background:rgba(255,153,102,.04);}
+.kp-tbl .zbadge{font-size:9px;padding:1px 5px;border:1px solid;}
+
+/* SUMMARY */
+.summary-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:14px;}
+.summary-grid.sm{grid-template-columns:repeat(3,1fr);}
+.sm-cell{background:var(--panel2);padding:10px 12px;text-align:center;}
+.sm-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;font-family:'Share Tech Mono',monospace;}
+.sm-val{font-size:20px;font-weight:bold;font-family:'Share Tech Mono',monospace;}
+
+/* LR BAR */
+.lr-bar-wrap{margin:12px 0;}
+.lr-bar{height:28px;display:flex;border:1px solid var(--border);overflow:hidden;}
+.lr-bar-L{background:rgba(0,229,255,.25);display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent);transition:width .4s;}
+.lr-bar-R{background:rgba(255,107,53,.25);display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent2);transition:width .4s;}
+.lr-bar-S{background:rgba(127,255,107,.15);display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent3);transition:width .4s;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="hl">
+    <div class="lbl">Tunnel Boring Machine // Navigation System</div>
+    <h1>TBM <span>RING KEY</span> CALCULATOR</h1>
+  </div>
+  <div class="hr"><span class="dot"></span>SYSTEM ACTIVE<br>OD: 6,300 mm | KEY: 16 | SEG: 1.4 m</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('ring')" id="tab-ring">▶ NEXT RING KEY</div>
+  <div class="tab" onclick="switchTab('plan')" id="tab-plan">▦ ALIGNMENT KEY PLANNER</div>
+</div>
+
+<!-- ========== TAB 1 ========== -->
+<div id="t-ring" class="tabcontent show">
+  <div class="g2">
+    <div>
+      <div class="panel">
+        <div class="ptitle">Current Ring Input</div>
+        <div class="g2f">
+          <div class="field"><label>Ring No.</label><input type="number" id="ringNo" value="1"></div>
+          <div class="field"><label>Current KEY</label>
+            <div id="keyDisplay" style="font-family:'Share Tech Mono',monospace;font-size:26px;font-weight:900;padding:6px 11px;background:var(--panel2);border:1px solid var(--border);color:var(--accent2);">R1</div>
+          </div>
+        </div>
+        <div class="field"><label>เลือก KEY</label><div class="key-grid" id="keyGrid"></div></div>
+        <div class="g2f">
+          <div class="field"><label>H Lead (mm)</label><input type="number" id="hLead" value="0" step="0.1"></div>
+          <div class="field"><label>V Plumb (mm)</label><input type="number" id="vPlumb" value="0" step="0.1"></div>
+        </div>
+        <div class="divider"></div>
+        <div class="ptitle">*Curve — เลือกจากตาราง</div>
+        <div class="field"><label>ทิศทางโค้ง</label>
+          <div class="dir-tog">
+            <div class="dir-btn" onclick="setDir('R')" id="dR">R (Right)</div>
+            <div class="dir-btn" onclick="setDir('L')" id="dL">L (Left)</div>
+            <div class="dir-btn aS" onclick="setDir('S')" id="dS">Straight</div>
+          </div>
+        </div>
+        <div class="field"><label>H Curve Table</label>
+          <div class="ctbl-wrap"><table class="ctbl">
+            <thead><tr><th>Radius</th><th>R (+)</th><th>L (−)</th><th>°</th></tr></thead>
+            <tbody id="ctBody"></tbody>
+          </table></div>
+        </div>
+        <div class="cv-prev">
+          <div class="cv-cell"><div class="cv-lbl">Radius</div><div class="cv-val" id="pvR" style="color:var(--accent3)">Straight</div></div>
+          <div class="cv-cell" style="border-left:1px solid var(--border)"><div class="cv-lbl">*Curve H</div><div class="cv-val" id="pvH" style="color:var(--muted)">0</div></div>
+          <div class="cv-cell" style="border-left:1px solid var(--border)"><div class="cv-lbl">*Curve V</div><div class="cv-val" style="color:var(--muted)">0</div></div>
+        </div>
+        <button class="calc-btn" onclick="calcRing()">▶ CALCULATE NEXT RING</button>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="ptitle">Candidates — Ring ถัดไป</div>
+        <div id="ringResult"><div class="no-result">กรอกข้อมูลแล้วกด Calculate</div></div>
+      </div>
+      <div class="panel">
+        <div class="ptitle">Ring Build Auto Simulate 10 Rings</div>
+        <div style="overflow-x:auto"><table class="kp-tbl">
+          <thead><tr><th>ACCU</th><th>RING</th><th>KEY</th><th>H LEAD</th><th>V LEAD</th><th>SEG H</th><th>SEG V</th><th>NEXT KEY</th><th>H AFTER</th><th>V AFTER</th></tr></thead>
+          <tbody id="hBody"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TAB 2 ========== -->
+<div id="t-plan" class="tabcontent">
+
+  <!-- TOP: Starting conditions + Alignment segments side by side -->
+  <div class="g2" style="margin-bottom:0">
+    <div class="panel warn-panel">
+      <div class="ptitle" style="color:var(--warn)">Starting Conditions</div>
+      <div class="g2f">
+        <div class="field"><label>Chainage เริ่มต้น (m)</label><input type="number" id="planCh0" value="0" step="1"></div>
+        <div class="field"><label>Ring No. เริ่มต้น</label><input type="number" id="planRing0" value="1" step="1"></div>
+      </div>
+      <div class="g2f">
+        <div class="field"><label>KEY เริ่มต้น</label><select id="planKey0"></select></div>
+        <div class="field"><label>H Lead (mm)</label><input type="number" id="planHL" value="0" step="0.1"></div>
+      </div>
+      <div class="field"><label>V Plumb (mm)</label><input type="number" id="planVP" value="0" step="0.1"></div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">Alignment Segments</div>
+      <div style="overflow-x:auto">
+        <table class="aln-table" id="alnTable">
+          <thead><tr>
+            <th>#</th><th>Type</th><th>Ch. จาก (m)</th><th>Ch. ถึง (m)</th>
+            <th>Radius (m)</th><th>Direction</th><th>Rings</th><th></th>
+          </tr></thead>
+          <tbody id="alnBody"></tbody>
+        </table>
+      </div>
+      <div class="add-row">
+        <button class="add-btn" onclick="addSeg('ST')">+ Straight</button>
+        <button class="add-btn warn" onclick="addSeg('TC')">+ TC In</button>
+        <button class="add-btn" onclick="addSeg('CR')" style="border-color:rgba(0,229,255,.4);color:var(--accent)">+ Circular</button>
+        <button class="add-btn" onclick="addSeg('TCo')" style="border-color:rgba(255,153,102,.4);color:#ff9966">+ TC Out</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="calc-btn wb" onclick="calcPlan()" style="flex:3">▶ GENERATE FULL KEY PLAN</button>
+        <button class="calc-btn" onclick="exportPlan()" style="flex:1;border-color:#7fff6b;color:#7fff6b">⬇ EXCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM: Summary + Full Key Plan -->
+  <div class="panel" id="planSummaryPanel" style="display:none;margin-top:14px">
+    <div class="ptitle" style="color:var(--accent3)">Summary</div>
+    <div id="planSummary"></div>
+  </div>
+  <div class="panel" style="margin-top:14px">
+    <div class="ptitle">Full Key Plan — ทุกริง</div>
+    <div id="planOut"><div class="no-result">กำหนด alignment แล้วกด Generate</div></div>
+  </div>
+
+  <div class="panel" id="planZonePanel" style="display:none;margin-top:14px">
+    <div class="ptitle" style="color:var(--warn)">L/R Ratio by Zone</div>
+    <div id="planZoneTable"><div class="no-result">Generate เพื่อดู zone ratio</div></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const SEG_W = 1.4;
+const ALL_KEYS = ['L1','L2','L3','L4','L5','L6','L12','L13','L14','L15','L16',
+                  'R1','R2','R3','R4','R5','R6','R12','R13','R14','R15','R16'];
+const SEG = {
+  L1:{h:55.43,v:22.96},L2:{h:42.43,v:42.43},L3:{h:22.96,v:55.43},L4:{h:0,v:60},
+  L5:{h:-22.96,v:55.43},L6:{h:-42.43,v:42.43},L12:{h:0,v:-60},L13:{h:22.96,v:-55.43},
+  L14:{h:42.43,v:-42.43},L15:{h:55.43,v:-22.96},L16:{h:60,v:0},
+  R1:{h:-55.43,v:22.96},R2:{h:-60,v:0},R3:{h:-55.43,v:-22.96},R4:{h:-42.43,v:-42.43},
+  R5:{h:-22.96,v:-55.43},R6:{h:0,v:-60},R12:{h:42.43,v:42.43},R13:{h:22.96,v:55.43},
+  R14:{h:0,v:60},R15:{h:-22.96,v:55.43},R16:{h:-42.43,v:42.43},
+};
+const NRM = {
+  L1:['L3','L15','R3','R15','L6','L12','R6','R12'],L2:['L4','L16','R4','R16','L13','R13'],
+  L3:['L5','L14','L1','R5','R14','R1'],L4:['L15','L2','R15','R2','L6','L12','R6','R12'],
+  L5:['L16','L3','R16','R3','L13','R13'],L6:['L1','L4','L14','R1','R4','R14'],
+  L12:['L14','L1','L4','R14','R1','R4'],L13:['L15','L2','L5','R15','R2','R5'],
+  L14:['L16','L3','R16','R3','L6','L12','R6','R12'],L15:['L1','L4','R1','R4','L13','R13'],
+  L16:['L2','L5','L14','R2','R5','R14'],
+  R1:['L3','L15','R3','R15','L6','L12','R6','R12'],R2:['L4','L16','R4','R16','L13','R13'],
+  R3:['L5','L14','L1','R5','R14','R1'],R4:['L15','L2','R15','R2','L6','L12','R6','R12'],
+  R5:['L16','L3','R16','R3','L13','R13'],R6:['L1','L4','L14','R1','R4','R14'],
+  R12:['L14','L1','L4','R14','R1','R4'],R13:['L15','L2','L5','R15','R2','R5'],
+  R14:['L16','L3','R16','R3','L6','L12','R6','R12'],R15:['L1','L4','R1','R4','L13','R13'],
+  R16:['L2','L5','L14','R2','R5','R14'],
+};
+// H Curve table sorted ascending
+const HCT = [
+  {r:'160m',rv:160,R:55.1,L:-55.1,d:1.8},{r:'180m',rv:180,R:49.0,L:-49.0,d:1.6},
+  {r:'200m',rv:200,R:44.1,L:-44.1,d:1.4},{r:'250m',rv:250,R:35.28,L:-35.28,d:1.2},
+  {r:'300m',rv:300,R:29.4,L:-29.4,d:1.0},{r:'500m',rv:500,R:17.64,L:-17.64,d:0.6},
+  {r:'600m',rv:600,R:14.7,L:-14.7,d:0.5},{r:'650m',rv:650,R:13.569,L:-13.569,d:0.4},
+  {r:'800m',rv:800,R:11.025,L:-11.025,d:0.4},{r:'1000m',rv:1000,R:8.82,L:-8.82,d:0.3},
+  {r:'1600m',rv:1600,R:5.5125,L:-5.5125,d:0.2},{r:'2000m',rv:2000,R:4.41,L:-4.41,d:0.1},
+  {r:'3000m',rv:3000,R:2.94,L:-2.94,d:0.1},{r:'4000m',rv:4000,R:2.2,L:-2.2,d:0.1},
+];
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmt(n){return (n>=0?'+':'')+n.toFixed(1);}
+function vc(n){return Math.abs(n)>30?'vn2':Math.abs(n)<30?'vp2':'vz2';}
+// color for H After in tight curve context: green = on correct side AND ≤30
+function vcH(ha, curveDir, tight){
+  if(!tight||curveDir==='S') return vc(ha);
+  const wantNeg=curveDir==='R';
+  const onSide=wantNeg?(ha<=0):(ha>=0);
+  if(onSide && Math.abs(ha)<=30) return 'vp2';   // ✓ ฝั่งถูก ใน±30
+  if(onSide && Math.abs(ha)>30)  return 'vz2';   // ฝั่งถูกแต่เกิน
+  return 'vn2';                                    // ฝั่งผิด
+}
+
+function interpCH(radiusM, dir){
+  if(!radiusM||radiusM>=4000) return 0;
+  let lo=HCT[0],hi=HCT[HCT.length-1];
+  for(let i=0;i<HCT.length-1;i++){
+    if(radiusM>=HCT[i].rv&&radiusM<=HCT[i+1].rv){lo=HCT[i];hi=HCT[i+1];break;}
+    if(radiusM<HCT[0].rv){lo=hi=HCT[0];break;}
+  }
+  const t=lo.rv===hi.rv?1:(radiusM-lo.rv)/(hi.rv-lo.rv);
+  // dir=R ใช้ col L (ลบ), dir=L ใช้ col R (บวก) — verified จาก Excel
+  const v=dir==='R'?lo.L+(hi.L-lo.L)*t:lo.R+(hi.R-lo.R)*t;
+  return +v.toFixed(2);
+}
+
+function getCands(key,hl,vp,ch){
+  return (NRM[key]||[]).map((k,i)=>{
+    const s=SEG[k]||{h:0,v:0};
+    const ha=+(hl+s.h+ch).toFixed(1);
+    const va=+(vp+s.v).toFixed(1);
+    return{k,sgH:s.h,sgV:s.v,ha,va,sH:ha>=0?'R/L':'L/L',sV:va>=0?'L/U':'O/H',rank:i+1};
+  });
+}
+
+// score ริงเดียว — รู้จัก curve direction และ tight curve
+// curveDir: 'R'|'L'|'S', isTight: radius <= 300m
+// สำหรับ tight curve (R≤300): prefer H After อยู่ฝั่งเดียวกับโค้ง (R→ลบ, L→บวก) แต่ไม่เกิน ±30
+function ringScore(ha, va, curveDir, tight){
+  curveDir = curveDir||'S'; tight = tight||false;
+  const vOk = Math.abs(va)<30;
+
+  let hScore;
+  if(tight && curveDir!=='S'){
+    // Tight curve: ideal คือ H ฝั่งเดียวกับโค้ง และ ≤ 30
+    // R curve: H ควรเป็น ลบ ระหว่าง -30 ถึง 0
+    // L curve: H ควรเป็น บวก ระหว่าง 0 ถึง +30
+    const wantNeg = curveDir==='R';
+    const onCorrectSide = wantNeg ? (ha<=0) : (ha>=0);
+    const withinLimit = Math.abs(ha)<=30;
+    if(onCorrectSide && withinLimit)
+      hScore = Math.abs(ha);                   // ดีที่สุด: ฝั่งถูก + ใน ±30
+    else if(onCorrectSide && !withinLimit)
+      hScore = 60 + Math.abs(ha);              // ฝั่งถูกแต่เกิน 30
+    else if(!onCorrectSide && withinLimit)
+      hScore = 100 + Math.abs(ha);             // ฝั่งผิดแต่ใน 30
+    else
+      hScore = 200 + Math.abs(ha);             // ฝั่งผิดและเกิน 30
+  } else {
+    // Straight / wide curve: ±30 สมมาตร
+    hScore = Math.abs(ha)<30 ? Math.abs(ha) : 100+Math.abs(ha);
+  }
+
+  const vScore = vOk ? Math.abs(va) : 100+Math.abs(va);
+  return hScore + vScore;
+}
+
+// Opposite pairs — keys ที่ balance กันดี (position ~180° apart on ring)
+const OPPOSITE_PAIRS = [
+  new Set(['R1','L3']),  new Set(['L3','R1']),
+  new Set(['L16','R2']), new Set(['R2','L16']),
+  new Set(['L15','R1']), new Set(['R1','L15']),
+  new Set(['L2','R4']),  new Set(['R4','L2']),
+  new Set(['R3','L1']),  new Set(['L1','R3']),
+  new Set(['R15','L1']), new Set(['L1','R15']),
+  new Set(['R16','L2']), new Set(['L2','R16']),
+  new Set(['R14','L6']), new Set(['L6','R14']),
+  new Set(['L4','R2']),  new Set(['R2','L4']),
+  new Set(['L13','R5']), new Set(['R5','L13']),
+  new Set(['L12','R6']), new Set(['R6','L12']),
+];
+
+// ตรวจว่า key ใหม่ + key ก่อนหน้า เป็น opposite pair หรือไม่
+function isOppositePair(prevKey, nextKey){
+  return OPPOSITE_PAIRS.some(p => p.has(prevKey) && p.has(nextKey));
+}
+
+// ตรวจว่า key ถัดไปจะทำให้ pattern ซ้ำเกิน maxRepeat ชุดหรือไม่ (cycle 1-4)
+function wouldRepeat(history, nextKey, maxRepeat){
+  const seq = [...history, nextKey];
+  for(let cycLen=1; cycLen<=4; cycLen++){
+    if(seq.length < cycLen*maxRepeat) continue;
+    const tail = seq.slice(-cycLen*maxRepeat);
+    const pat = tail.slice(0, cycLen);
+    let isRepeat = true;
+    for(let r=0; r<maxRepeat; r++){
+      for(let j=0; j<cycLen; j++){
+        if(tail[r*cycLen+j] !== pat[j]){ isRepeat=false; break; }
+      }
+      if(!isRepeat) break;
+    }
+    if(isRepeat) return true;
+  }
+  return false;
+}
+
+// ตรวจว่า type (L/R) ซ้ำติดกันเกิน maxSame ริงหรือไม่ — ใช้สำหรับทางตรง
+function wouldSameTypeTooLong(history, nextKey, maxSame){
+  const nextType = nextKey[0];
+  let run = 0;
+  for(let i=history.length-1; i>=0; i--){
+    if(history[i][0] === nextType) run++;
+    else break;
+  }
+  return (run + 1) > maxSame;
+}
+
+// ดูว่า type ที่ควรมาถัดไปคืออะไร (สลับ L↔R)
+// history = array ของ key ที่ผ่านมา
+function expectedNextType(history){
+  if(!history.length) return null; // ไม่รู้ → free
+  const lastType = history[history.length-1][0]; // L หรือ R
+  return lastType === 'L' ? 'R' : 'L';
+}
+
+// Keys พิเศษสำหรับโค้งแคบ (R < 500m)
+// R2 = Seg Give H = -60 (ลบมากที่สุด) → Right curve แคบ
+// L16 = Seg Give H = +60 (บวกมากที่สุด) → Left curve แคบ
+const TIGHT_CURVE_KEY = {R:'R2', L:'L16'};
+
+// ตรวจว่าเป็น tight curve (radius < 500m) หรือไม่
+function isTightCurve(ch){
+  // |ch| > interpCH(500, dir) ≈ 17.6 → radius < 500m
+  return Math.abs(ch) > 17;
+}
+
+// กรอง candidates ตาม constraints: anti-repeat + alternating type (straight) + prefer opposite pair
+function filterCands(cands, history, isStraight){
+  let filtered = cands.filter(c => !wouldRepeat(history, c.k, 4));
+  if(!filtered.length) filtered = cands;
+
+  if(isStraight){
+    // Priority 1: สลับ type L↔R ทุกริง
+    const wantType = expectedNextType(history);
+    if(wantType){
+      const altPool = filtered.filter(c => c.k[0] === wantType);
+      if(altPool.length > 0){
+        filtered = altPool;
+      } else {
+        // ถ้าไม่มี type ที่ต้องการ → fallback ห้ามซ้ำเกิน 2 ริง
+        const noSameType = filtered.filter(c => !wouldSameTypeTooLong(history, c.k, 2));
+        if(noSameType.length > 0) filtered = noSameType;
+      }
+    }
+  }
+
+  if(!filtered.length) filtered = cands; // final fallback
+
+  // Prefer opposite pair
+  const prevKey = history.length > 0 ? history[history.length-1] : null;
+  if(prevKey){
+    const oppPool = filtered.filter(c => isOppositePair(prevKey, c.k));
+    if(oppPool.length > 0) filtered._oppPool = oppPool;
+  }
+  return filtered;
+}
+
+// สร้าง preferred pool สำหรับ tight curve
+// dir: 'R'|'L', ch: *Curve H ของริงนั้น
+// ถ้า radius < 500m → prefer R2 (right) หรือ L16 (left)
+function getTightCurvePool(cands, ch, curveDir){
+  if(!isTightCurve(ch) || curveDir==='S') return null;
+  const prefKey = TIGHT_CURVE_KEY[curveDir]; // 'R2' or 'L16'
+  const pool = cands.filter(c => c.k === prefKey);
+  return pool.length > 0 ? pool : null;
+}
+
+// lookahead depth ริง — keyHistory ใช้ตรวจ pattern + type run
+// segTypeFuture(d): 'ST'|'TC'|'CR'|'TCo' ของริงอนาคต (null = ไม่รู้ → ไม่ apply same-type rule)
+// curveDir: 'R'|'L'|'S' ใช้สำหรับ tight curve preference
+function bestKeyLookahead(key, hl, vp, ch, chFuture, depth, keyHistory, segType, segTypeFuture, curveDir){
+  depth = depth||3;
+  keyHistory = keyHistory||[];
+  segType = segType||null;
+  curveDir = curveDir||'S';
+  const isStraight = segType==='ST';
+  const cands = getCands(key,hl,vp,ch);
+  if(!cands.length) return null;
+
+  const filtered = filterCands(cands, keyHistory, isStraight);
+  const oppPool = filtered._oppPool;
+
+  // Tight curve pool: radius < 500m → strongly prefer R2 / L16
+  const tightPool = getTightCurvePool(cands, ch, curveDir);
+  // ใช้ tightPool ถ้ามี และ score ไม่แย่กว่า threshold
+  const pool = filtered;
+
+  let bestC=null, bestScore=Infinity;
+  pool.forEach(c=>{
+    const isTight = Math.abs(ch)>28;
+    let score = ringScore(c.ha, c.va, curveDir, isTight);
+    let k2=c.k;
+    // carry forward ไม่รวม ch เพื่อป้องกัน double-count ใน sub-depth
+    let h2 = +(hl + SEG[c.k].h).toFixed(1);
+    let v2 = +(vp + SEG[c.k].v).toFixed(1);
+    const hist2 = [...keyHistory, c.k];
+    for(let d=1;d<depth;d++){
+      const ch2 = chFuture ? chFuture(d) : ch;
+      const st2 = segTypeFuture ? segTypeFuture(d) : segType;
+      const ca2 = getCands(k2,h2,v2,ch2);
+      if(!ca2.length) break;
+      const pool2 = filterCands(ca2, hist2, st2==='ST');
+      const ch2isTight = Math.abs(ch2)>28;
+      const sub = pool2.reduce((b,x)=>ringScore(x.ha,x.va,curveDir,ch2isTight)<ringScore(b.ha,b.va,curveDir,ch2isTight)?x:b);
+      score += ringScore(sub.ha,sub.va);
+      hist2.push(sub.k);
+      k2=sub.k;
+      // carry forward: h + sgH เท่านั้น (ch จะบวกใหม่ใน getCands ริงถัดไป)
+      h2 = +(h2 + SEG[sub.k].h).toFixed(1);
+      v2 = +(v2 + SEG[sub.k].v).toFixed(1);
+    }
+    if(score<bestScore){bestScore=score;bestC=c;}
+  });
+
+  // ถ้ามี tightPool (radius < 500m) → prefer R2/L16 ถ้า score ไม่แย่กว่า bestC เกิน 60
+  if(tightPool && tightPool.length > 0 && bestC){
+    let bestTight=null, bestTightScore=Infinity;
+    tightPool.forEach(c=>{
+      const isTightT=Math.abs(ch)>28;
+      let score = ringScore(c.ha, c.va, curveDir, isTightT);
+      let k2=c.k, h2=c.ha, v2=c.va;
+      const hist2=[...keyHistory, c.k];
+      for(let d=1;d<depth;d++){
+        const ch2=chFuture?chFuture(d):ch;
+        const st2=segTypeFuture?segTypeFuture(d):segType;
+        const ca2=getCands(k2,h2,v2,ch2);
+        if(!ca2.length) break;
+        const p2=filterCands(ca2,hist2,st2==='ST');
+        const ch2t=chFuture?chFuture(d):ch; const isTight2=Math.abs(ch2t)>28;
+        const sub=p2.reduce((b,x)=>ringScore(x.ha,x.va,curveDir,isTight2)<ringScore(b.ha,b.va,curveDir,isTight2)?x:b);
+        score+=ringScore(sub.ha,sub.va,curveDir,isTight2); hist2.push(sub.k);
+        k2=sub.k; h2=+(h2+SEG[sub.k].h).toFixed(1); v2=+(v2+SEG[sub.k].v).toFixed(1);
+      }
+      if(score<bestTightScore){bestTightScore=score;bestTight=c;}
+    });
+    // ใช้ tightPool ถ้า score ไม่แย่กว่า best เกิน 60 (threshold กว้างกว่า opp เพราะ priority สูง)
+    if(bestTight && bestTightScore - bestScore <= 60) bestC = bestTight;
+  }
+
+  // ถ้ามี oppPool → เปรียบ score แล้วเลือก opp ถ้าไม่แย่กว่าเกิน 40
+  if(oppPool && oppPool.length > 0 && bestC){
+    let bestOpp=null, bestOppScore=Infinity;
+    oppPool.forEach(c=>{
+      const isTightO=Math.abs(ch)>28;
+      let score = ringScore(c.ha, c.va, curveDir, isTightO);
+      let k2=c.k;
+      let h2 = +(hl + SEG[c.k].h).toFixed(1);
+      let v2 = +(vp + SEG[c.k].v).toFixed(1);
+      const hist2=[...keyHistory, c.k];
+      for(let d=1;d<depth;d++){
+        const ch2=chFuture?chFuture(d):ch;
+        const st2=segTypeFuture?segTypeFuture(d):segType;
+        const ca2=getCands(k2,h2,v2,ch2);
+        if(!ca2.length) break;
+        const p2=filterCands(ca2,hist2,st2==='ST');
+        const sub=p2.reduce((b,x)=>ringScore(x.ha,x.va)<ringScore(b.ha,b.va)?x:b);
+        score+=ringScore(sub.ha,sub.va);
+        hist2.push(sub.k); k2=sub.k; h2=sub.ha; v2=sub.va;
+      }
+      if(score<bestOppScore){bestOppScore=score;bestOpp=c;}
+    });
+    if(bestOpp && bestOppScore - bestScore <= 40) bestC = bestOpp;
+  }
+
+  return bestC;
+}
+
+function bestKey(cands, curveDir, ch){
+  curveDir=curveDir||'S'; ch=ch||0;
+  const tight=Math.abs(ch)>28;
+  return cands.reduce((b,c)=>{
+    const cs=ringScore(c.ha,c.va,curveDir,tight), bs=ringScore(b.ha,b.va,curveDir,tight);
+    return cs<bs?c:b;
+  });
+}
+
+function keyType(k){return k[0]==='L'?'L':'R';}
+function kColor(k){return k[0]==='L'?'var(--accent)':'var(--accent2)';}
+
+// ============================================================
+// TAB 1
+// ============================================================
+let curKey='R1',curDir='S',curCI=null;
+
+function switchTab(t){
+  ['ring','plan'].forEach(x=>{
+    document.getElementById('t-'+x).classList.toggle('show',x===t);
+    document.getElementById('tab-'+x).classList.toggle('active',x===t);
+  });
+}
+
+function initKeyGrid(){
+  const g=document.getElementById('keyGrid');
+  ALL_KEYS.forEach(k=>{
+    const b=document.createElement('button');
+    b.className='key-btn '+(k[0]==='L'?'L-type':'R-type');
+    b.textContent=k;b.dataset.k=k;b.onclick=()=>pickKey(k);g.appendChild(b);
+  });
+  pickKey('R1');
+}
+
+function pickKey(k){
+  curKey=k;
+  document.querySelectorAll('.key-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.key-btn[data-k="${k}"]`).classList.add('active');
+  const d=document.getElementById('keyDisplay');
+  d.textContent=k;d.style.color=kColor(k);
+}
+
+function initCT(){
+  const rows=[...HCT].reverse();
+  document.getElementById('ctBody').innerHTML=rows.map((c,i)=>{
+    const oi=HCT.length-1-i;
+    return`<tr id="cr${oi}" onclick="pickCurve(${oi})">
+      <td>${c.r}</td><td class="rv">+${c.R.toFixed(1)}</td>
+      <td class="lv">${c.L.toFixed(1)}</td><td class="dv">${c.d.toFixed(1)}</td></tr>`;
+  }).join('');
+}
+
+function pickCurve(i){
+  curCI=i;
+  document.querySelectorAll('#ctBody tr').forEach(r=>r.classList.remove('sel'));
+  document.getElementById('cr'+i).classList.add('sel');
+  refreshPrev();
+}
+
+function setDir(d){
+  curDir=d;
+  ['R','L','S'].forEach(x=>document.getElementById('d'+x).className='dir-btn'+(x===d?' a'+x:''));
+  refreshPrev();
+}
+
+function getCH(){
+  if(curDir==='S'||curCI===null) return 0;
+  // dir=R ใช้ col L (ลบ), dir=L ใช้ col R (บวก) — verified จาก Excel
+  return curDir==='R'?HCT[curCI].L:HCT[curCI].R;
+}
+
+function refreshPrev(){
+  const ch=getCH();
+  document.getElementById('pvR').textContent=curDir==='S'?'Straight':(curCI!==null?HCT[curCI].r:'-');
+  const el=document.getElementById('pvH');
+  el.textContent=(ch>=0?'+':'')+ch.toFixed(1);
+  el.style.color=ch===0?'var(--muted)':'var(--accent)';
+}
+
+function calcRing(){
+  const rn=parseInt(document.getElementById('ringNo').value)||0;
+  const hl=parseFloat(document.getElementById('hLead').value)||0;
+  const vp=parseFloat(document.getElementById('vPlumb').value)||0;
+  const ch=getCH();
+  const tab1SegType = curDir==='S' ? 'ST' : 'CR';
+  const cands=getCands(curKey,hl,vp,ch);
+  const best=bestKeyLookahead(curKey,hl,vp,ch,null,3,[],tab1SegType,null,curDir);
+  const chLbl=curDir==='S'?'Straight':(curCI!==null?HCT[curCI].r+' ('+curDir+')':'-');
+
+  let html=`<div class="statebox" style="grid-template-columns:repeat(3,1fr)">
+    <div class="sc"><div class="sl">Ring ปัจจุบัน</div><div class="sv">${rn}</div></div>
+    <div class="sc"><div class="sl">KEY</div><div class="sv" style="color:${kColor(curKey)}">${curKey}</div></div>
+    <div class="sc"><div class="sl">*Curve H</div><div class="sv" style="font-size:14px;color:${ch===0?'var(--muted)':'var(--warn)'}">${fmt(ch)}</div></div>
+  </div>
+  <table class="seg-tbl"><thead><tr>
+    <th class="tl">Next Key</th><th>Seg H</th><th>Seg V</th>
+    <th>After H</th><th>After V</th><th>Seg Dir H</th><th>Seg Dir V</th><th>#</th>
+  </tr></thead><tbody>`;
+  cands.forEach(c=>{
+    const ib=c.k===best.k;
+    html+=`<tr class="${ib?'best-row':''}">
+      <td class="kc ${keyType(c.k)}">${c.k}${ib?' <span style="color:var(--accent3);font-size:10px">★</span>':''}</td>
+      <td class="${vc(c.sgH)}">${fmt(c.sgH)}</td><td class="${vc(c.sgV)}">${fmt(c.sgV)}</td>
+      <td class="${vc(c.ha)}" style="font-weight:bold">${fmt(c.ha)}</td>
+      <td class="${vc(c.va)}" style="font-weight:bold">${fmt(c.va)}</td>
+      <td class="s${c.sH==='R/L'?'rl':'ll'}">${c.sH}</td>
+      <td class="s${c.sV==='L/U'?'lu':'oh'}">${c.sV}</td>
+      <td style="color:${c.rank===1?'var(--accent3)':'var(--muted)'}">#${c.rank}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>
+  <div class="fbox">H After = ${fmt(hl)} + Seg H + *Curve H (${fmt(ch)}) [${chLbl}]<br>
+  V After = ${fmt(vp)} + Seg V &nbsp;|&nbsp;
+  <span style="color:var(--accent3)">R/L</span> H≥0 &nbsp;<span style="color:var(--accent2)">L/L</span> H&lt;0 &nbsp;
+  <span style="color:#a78bfa">L/U</span> V≥0 &nbsp;<span style="color:var(--warn)">O/H</span> V&lt;0</div>`;
+  document.getElementById('ringResult').innerHTML=html;
+
+  // history 10 แถว — lookahead + anti-repeat + same-type + ratio bias
+  let rn2=rn,key2=curKey,hl2=hl,vp2=vp;
+  const rows=[];
+  let hist10=[curKey];
+  const h10SegType = curDir==='S' ? 'ST' : 'CR';
+  // ratio tally สำหรับ Tab1
+  let h10tally = {cntL:0, cntR:0, targetPctL:50, targetPctR:50, _sumTgtL:0, _sumTgtR:0, _rc:0};
+  for(let i=0;i<10;i++){
+    // คำนวณ per-ring target ratio จาก available candidates
+    const rc10 = getCands(key2,hl2,vp2,ch);
+    const {targetPctL:tL10, targetPctR:tR10} = calcTargetRatioFromCands(rc10, ch);
+    h10tally._sumTgtL += tL10; h10tally._sumTgtR += tR10; h10tally._rc++;
+    h10tally.targetPctL = h10tally._sumTgtL / h10tally._rc;
+    h10tally.targetPctR = h10tally._sumTgtR / h10tally._rc;
+
+    // ratio bias
+    let ratioBias10 = null;
+    const done10 = h10tally.cntL + h10tally.cntR;
+    if(done10 > 0){
+      const curPctR10 = h10tally.cntR/done10*100;
+      const curPctL10 = h10tally.cntL/done10*100;
+      if(curPctR10 - h10tally.targetPctR > 5) ratioBias10 = 'L';
+      else if(curPctL10 - h10tally.targetPctL > 5) ratioBias10 = 'R';
+    }
+
+    let chosen = bestKeyLookahead(key2,hl2,vp2,ch,null,3,hist10,h10SegType,null);
+
+    // apply ratio bias ถ้าจำเป็น
+    if(ratioBias10 && chosen && chosen.k[0] !== ratioBias10){
+      const pool10 = filterCands(rc10, hist10, h10SegType==='ST');
+      const bPool10 = pool10.filter(c=>c.k[0]===ratioBias10);
+      if(bPool10.length>0){
+        const alt10 = bPool10.reduce((b,c)=>ringScore(c.ha,c.va)<ringScore(b.ha,b.va)?c:b);
+        if(ringScore(alt10.ha,alt10.va) - ringScore(chosen.ha,chosen.va) < 50) chosen=alt10;
+      }
+    }
+
+    if(chosen.k[0]==='L') h10tally.cntL++; else h10tally.cntR++;
+    rows.push({accu:i+1,rn:rn2,key:key2,hl:hl2,vp:vp2,chosen});
+    hist10.push(chosen.k);
+    rn2++;key2=chosen.k;
+    // carry forward: hl หลัง build = hl + sgH (ไม่มี ch)
+    // curve จะถูกบวกใหม่ในริงถัดไปผ่าน getCands
+    hl2 = +(hl2 + SEG[chosen.k].h).toFixed(1);
+    vp2 = +(vp2 + SEG[chosen.k].v).toFixed(1);
+  }
+  document.getElementById('hBody').innerHTML=rows.map(r=>`<tr>
+    <td>${r.accu}</td><td>${r.rn}</td>
+    <td style="color:${kColor(r.key)};font-weight:bold">${r.key}</td>
+    <td class="${vc(r.hl)}">${r.hl.toFixed(1)}</td><td class="${vc(r.vp)}">${r.vp.toFixed(1)}</td>
+    <td class="s${r.chosen.sH==='R/L'?'rl':'ll'}">${r.chosen.sH}</td>
+    <td class="s${r.chosen.sV==='L/U'?'lu':'oh'}">${r.chosen.sV}</td>
+    <td style="color:${kColor(r.chosen.k)};font-weight:bold">${r.chosen.k}</td>
+    <td class="${vc(r.chosen.ha)}" style="font-weight:bold">${fmt(r.chosen.ha)}</td>
+    <td class="${vc(r.chosen.va)}" style="font-weight:bold">${fmt(r.chosen.va)}</td>
+  </tr>`).join('');
+}
+
+// Render zone ratio table into planZonePanel
+function renderZoneTable(zoneStats){
+  if(!zoneStats||!zoneStats.length) return;
+  const rows = zoneStats.map(z=>{
+    const barL=z.actualPctL, barR=z.actualPctR;
+    const hcL = Math.abs(z.diffL)>5?'var(--danger)':'var(--accent)';
+    const hcR = Math.abs(z.diffR)>5?'var(--danger)':'var(--accent2)';
+    const dirColor = z.dir==='R'?'var(--accent)':z.dir==='L'?'var(--accent2)':'var(--muted)';
+    const tgtL = z.type==='ST'?'50.0':z.targetPctL;
+    const tgtR = z.type==='ST'?'50.0':z.targetPctR;
+    const barLpct = barL+'%', barRpct = barR+'%';
+    const status = z.warn
+      ? '<span class="warn-badge">&#9888; OFF</span>'
+      : '<span class="ok-badge">&#10003; OK</span>';
+    return '<tr style="line-height:2">'
+      + '<td style="text-align:left;color:var(--text);padding:12px 10px">'+z.label+'</td>'
+      + '<td style="color:'+dirColor+'">'+z.dir+'</td>'
+      + '<td>'+z.rings+'</td>'
+      + '<td style="color:var(--accent)">'+tgtL+'%</td>'
+      + '<td style="color:var(--accent2)">'+tgtR+'%</td>'
+      + '<td style="color:'+hcL+';font-weight:bold">'+z.actualPctL+'%</td>'
+      + '<td style="color:'+hcR+';font-weight:bold">'+z.actualPctR+'%</td>'
+      + '<td><div class="ratio-bar">'
+        + '<div class="ratio-bar-L" style="width:'+barLpct+'">'+(barL>15?barLpct:'')+'</div>'
+        + '<div class="ratio-bar-R" style="width:'+barRpct+'">'+(barR>15?barRpct:'')+'</div>'
+      + '</div></td>'
+      + '<td>'+status+'</td>'
+      + '</tr>';
+  }).join('');
+
+  document.getElementById('planZoneTable').innerHTML =
+    '<table class="zone-ratio-tbl">'
+    + '<thead><tr>'
+    + '<th>Zone</th><th>Dir</th><th>Rings</th>'
+    + '<th>Target %L</th><th>Target %R</th>'
+    + '<th>Actual %L</th><th>Actual %R</th>'
+    + '<th>L vs R</th><th>Status</th>'
+    + '</tr></thead>'
+    + '<tbody>'+rows+'</tbody>'
+    + '</table>';
+}
+
+// ============================================================
+// TAB 2 — ALIGNMENT PLANNER
+// ============================================================
+let segs=[];
+let segId=0;
+
+function initPlanKeySelect(){
+  const sel=document.getElementById('planKey0');
+  ALL_KEYS.forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
+  sel.value='R1';
+}
+
+
+// คำนวณ target %L/%R จาก available candidates และ *Curve H
+//
+// Convention ที่ verified แล้ว:
+//   R-type (R1...) → Seg Give H ลบ → TBM หัน ขวา (Right)
+//   L-type (L1...) → Seg Give H บวก → TBM หัน ซ้าย (Left)
+//
+//   *Curve H ลบ  = dir=R = Right curve → ต้องการ net taper ลบ  → R-type มากกว่า
+//   *Curve H บวก = dir=L = Left curve  → ต้องการ net taper บวก → L-type มากกว่า
+//   *Curve H = 0 = Straight            → 50/50
+//
+// สูตร: pctR*avgSegH_R + pctL*avgSegH_L = ch
+//        pctR + pctL = 1
+// → targetPctR = (ch - avgSegH_L) / (avgSegH_R - avgSegH_L)
+//   Right curve: ch<0, avgR<0<avgL → targetPctR > 0.5 ✓ (R มากกว่า)
+//   Left curve:  ch>0, avgR<0<avgL → targetPctR < 0.5 ✓ (L มากกว่า)
+//   Straight:    ch=0              → targetPctR = 0.5 ✓
+function calcTargetRatioFromCands(cands, ch) {
+  const Lc = cands.filter(c=>c.k[0]==='L');
+  const Rc = cands.filter(c=>c.k[0]==='R');
+  if(Lc.length===0 && Rc.length===0) return {targetPctL:50, targetPctR:50, avgL:0, avgR:0};
+  if(Lc.length===0) return {targetPctL:0, targetPctR:100, avgL:0, avgR:+(Rc.reduce((s,c)=>s+c.sgH,0)/Rc.length).toFixed(2)};
+  if(Rc.length===0) return {targetPctL:100, targetPctR:0, avgL:+(Lc.reduce((s,c)=>s+c.sgH,0)/Lc.length).toFixed(2), avgR:0};
+
+  const avgL = Lc.reduce((s,c)=>s+c.sgH,0)/Lc.length;  // บวก เช่น +30
+  const avgR = Rc.reduce((s,c)=>s+c.sgH,0)/Rc.length;  // ลบ เช่น -30
+  if(Math.abs(avgR-avgL)<0.01) return {targetPctL:50, targetPctR:50, avgL:+avgL.toFixed(2), avgR:+avgR.toFixed(2)};
+
+  // targetPctR = (ch - avgL) / (avgR - avgL)
+  let tR = (ch - avgL) / (avgR - avgL) * 100;
+  tR = Math.max(0, Math.min(100, tR));
+  return {targetPctL:+(100-tR).toFixed(1), targetPctR:+tR.toFixed(1), avgL:+avgL.toFixed(2), avgR:+avgR.toFixed(2)};
+}
+
+// คำนวณ zone-level target ratio โดย average จาก candidates ของทุกริงใน zone
+function calcZoneTargetRatio(ringList, startKey) {
+  // simulate key transitions เพื่อรู้ว่าแต่ละริงมี candidates อะไร
+  // ใช้ startKey แล้ว advance ไปเรื่อยๆ (ไม่ใช้ H/V จริง เพราะต้องการแค่ candidate set)
+  const zoneRatios = {}; // si → {sumTgtL, sumTgtR, count, avgL, avgR}
+  let curKey = startKey;
+  ringList.forEach((info, ri) => {
+    const si = segs.findIndex(s=>info.chPos>=s.chFrom&&info.chPos<s.chTo);
+    const cands = getCands(curKey, 0, 0, info.ch); // H/V=0 เพราะต้องการแค่ candidate keys
+    const {targetPctL, targetPctR, avgL, avgR} = calcTargetRatioFromCands(cands, info.ch);
+    if(!zoneRatios[si]) zoneRatios[si] = {sumL:0, sumR:0, count:0, avgLSum:0, avgRSum:0};
+    zoneRatios[si].sumL += targetPctL;
+    zoneRatios[si].sumR += targetPctR;
+    zoneRatios[si].avgLSum += avgL;
+    zoneRatios[si].avgRSum += avgR;
+    zoneRatios[si].count++;
+    // advance key: เลือก first available candidate (ไม่สน H/V)
+    if(cands.length>0) curKey = cands[0].k;
+  });
+  // avg per zone
+  const result = {};
+  Object.entries(zoneRatios).forEach(([si, z])=>{
+    result[si] = {
+      targetPctL: +(z.sumL/z.count).toFixed(1),
+      targetPctR: +(z.sumR/z.count).toFixed(1),
+      avgL: +(z.avgLSum/z.count).toFixed(2),
+      avgR: +(z.avgRSum/z.count).toFixed(2),
+    };
+  });
+  return result;
+}
+
+// Build zone stats จาก planRows + per-ring candidate data
+function calcZoneStats(planRows, ringList) {
+  const zoneMap = {};
+  ringList.forEach((info, ri) => {
+    const si = segs.findIndex(s=>info.chPos>=s.chFrom&&info.chPos<s.chTo);
+    if(si<0) return;
+    if(!zoneMap[si]) {
+      const s = segs[si];
+      zoneMap[si] = {
+        label:`${TYPE_LABEL[s.type]} (${s.chFrom}–${s.chTo}m)`,
+        type:s.type, dir:s.type!=='ST'?s.dir:'—',
+        rings:0, cntL:0, cntR:0,
+        targetPctL:50, targetPctR:50, // จะ overwrite ด้านล่าง
+        avgL:0, avgR:0,
+      };
+    }
+    zoneMap[si].rings++;
+    const row = planRows[ri];
+    if(row && row.chosen){
+      // คำนวณ target ratio จาก candidates จริงของริงนี้
+      const cands = getCands(row.key, row.hl, row.vp, info.ch);
+      const {targetPctL, targetPctR, avgL, avgR} = calcTargetRatioFromCands(cands, info.ch);
+      // accumulate weighted average
+      zoneMap[si]._sumTL = (zoneMap[si]._sumTL||0) + targetPctL;
+      zoneMap[si]._sumTR = (zoneMap[si]._sumTR||0) + targetPctR;
+      zoneMap[si]._sumAvgL = (zoneMap[si]._sumAvgL||0) + avgL;
+      zoneMap[si]._sumAvgR = (zoneMap[si]._sumAvgR||0) + avgR;
+      if(row.chosen.k[0]==='L') zoneMap[si].cntL++;
+      else zoneMap[si].cntR++;
+    }
+  });
+  return Object.entries(zoneMap).map(([si, z]) => {
+    const tot = z.cntL + z.cntR;
+    z.targetPctL = tot>0 ? +(z._sumTL/tot).toFixed(1) : 50;
+    z.targetPctR = tot>0 ? +(z._sumTR/tot).toFixed(1) : 50;
+    z.avgL = tot>0 ? +(z._sumAvgL/tot).toFixed(2) : 0;
+    z.avgR = tot>0 ? +(z._sumAvgR/tot).toFixed(2) : 0;
+    z.actualPctL = tot>0 ? +(z.cntL/tot*100).toFixed(1) : 0;
+    z.actualPctR = tot>0 ? +(z.cntR/tot*100).toFixed(1) : 0;
+    z.diffL = +(z.actualPctL - z.targetPctL).toFixed(1);
+    z.diffR = +(z.actualPctR - z.targetPctR).toFixed(1);
+    z.warn = Math.abs(z.diffL) > 5;
+    return z;
+  });
+}
+
+// Auto-fill ch. ถึง และ carry ลงบรรทัดถัดไป
+function onChToChange(i, val){
+  const v = parseFloat(val)||0;
+  segs[i].chTo = v;
+  // ถ้ามี segment ถัดไป และ chFrom ของมัน = chTo เก่า → อัปเดตอัตโนมัติ
+  if(i+1 < segs.length){
+    segs[i+1].chFrom = v;
+  }
+  renderAlnTable();
+}
+
+// type: ST=Straight, TC=TC-in, CR=Circular, TCo=TC-out
+function addSeg(type){
+  const id=segId++;
+  // auto-fill chainage from last segment end
+  const lastCh=segs.length>0?segs[segs.length-1].chTo:parseFloat(document.getElementById('planCh0').value)||0;
+  const defLen={ST:200,TC:70,CR:400,TCo:70}[type];
+  segs.push({id,type,chFrom:+(lastCh).toFixed(3),chTo:+(lastCh+defLen).toFixed(3),radius:500,dir:'R'});
+  renderAlnTable();
+}
+
+function removeSeg(id){segs=segs.filter(s=>s.id!==id);renderAlnTable();}
+
+const TYPE_LABEL={ST:'Straight',TC:'TC In',CR:'Circular',TCo:'TC Out'};
+const TYPE_ROW={ST:'badge-ST',TC:'badge-TC',CR:'badge-CR',TCo:'badge-TCo'};
+
+function renderAlnTable(){
+  document.getElementById('alnBody').innerHTML=segs.map((s,i)=>{
+    const nRings=Math.ceil((s.chTo-s.chFrom)/SEG_W);
+    const needR=s.type!=='ST';
+    const needDir=s.type!=='ST';
+    return`<tr>
+      <td style="color:var(--muted);font-family:'Share Tech Mono',monospace;text-align:center;font-size:16px">${i+1}</td>
+      <td style="white-space:nowrap"><span class="type-badge ${TYPE_ROW[s.type]}">${TYPE_LABEL[s.type]}</span></td>
+      <td style="min-width:100px"><input type="number" value="${s.chFrom}" step="0.001"
+        onchange="segs[${i}].chFrom=parseFloat(this.value)||0;renderAlnTable()"></td>
+      <td style="min-width:100px"><input type="number" value="${s.chTo}" step="0.001"
+        onchange="onChToChange(${i}, this.value)"></td>
+      <td style="min-width:100px">${needR?`<input type="number" value="${s.radius}" min="200" step="50"
+        onchange="segs[${i}].radius=parseFloat(this.value)||500">`:
+        '<span style="color:var(--muted);font-size:14px;padding:10px;display:block;text-align:center">—</span>'}</td>
+      <td style="min-width:80px">${needDir?`<select onchange="segs[${i}].dir=this.value">
+        <option value="R" ${s.dir==='R'?'selected':''}>R</option>
+        <option value="L" ${s.dir==='L'?'selected':''}>L</option>
+      </select>`:'<span style="color:var(--muted);font-size:14px;padding:10px;display:block;text-align:center">—</span>'}</td>
+      <td style="font-family:'Share Tech Mono',monospace;color:${nRings>0?'var(--text)':'var(--danger)'};font-size:16px;text-align:center">${nRings>0?nRings:'!'}</td>
+      <td><button class="del-btn" onclick="removeSeg(${s.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// Build per-ring info from alignment segments
+function buildRingList(startCh, startRing){
+  const list=[];
+  let rn=startRing;
+  segs.forEach(s=>{
+    const len=s.chTo-s.chFrom;
+    if(len<=0) return;
+    const nRings=Math.ceil(len/SEG_W);
+    for(let i=0;i<nRings;i++){
+      const sFrac=(i+1)*SEG_W; // distance within segment
+      let radius=null,ch=0;
+      if(s.type==='ST'){
+        radius=null;ch=0;
+      } else if(s.type==='CR'){
+        radius=s.radius;ch=interpCH(s.radius,s.dir);
+      } else {
+        // TC in: radius goes from ∞ → R over length L; offset from start
+        // TC out: radius goes from R → ∞; use mirror
+        const A2=s.radius*len;
+        const sPos=s.type==='TCo'?(len-Math.min(sFrac,len)):Math.min(sFrac,len);
+        radius=sPos>0?Math.round(A2/sPos):99999;
+        if(radius>4000) radius=null; // treat as straight
+        ch=interpCH(radius||4001,s.dir);
+      }
+      const chPos=+(s.chFrom+i*SEG_W).toFixed(3);
+      list.push({rn,chPos:+chPos.toFixed(1),segType:s.type,radius,ch,dir:s.dir});
+      rn++;
+    }
+  });
+  return list;
+}
+
+function calcPlan(){
+  if(!segs.length){alert('กรุณาเพิ่ม Alignment Segment ก่อนครับ');return;}
+  const startCh=parseFloat(document.getElementById('planCh0').value)||0;
+  const startRing=parseInt(document.getElementById('planRing0').value)||1;
+  const startKey=document.getElementById('planKey0').value||'R1';
+  const startHL=parseFloat(document.getElementById('planHL').value)||0;
+  const startVP=parseFloat(document.getElementById('planVP').value)||0;
+
+  const ringList=buildRingList(startCh,startRing);
+  if(!ringList.length){alert('ไม่มีริงในช่วงนี้');return;}
+
+  // Simulate
+  let key=startKey,hl=startHL,vp=startVP;
+  const planRows=[];
+  let cntL=0,cntR=0,cntS=0;
+
+  let planKeyHistory=[startKey];
+  // Per-segment L/R tally — target ratio คำนวณ per-ring จาก available candidates
+  const segTally={};
+  segs.forEach((s,si)=>{
+    const nR=Math.ceil((s.chTo-s.chFrom)/SEG_W);
+    segTally[si]={cntL:0,cntR:0,targetPctL:50,targetPctR:50,totalRings:nR,_sumTgtL:0,_sumTgtR:0,_ringCount:0};
+  });
+
+  ringList.forEach((info,idx)=>{
+    const chFuture=(d)=>{const fi=idx+d;return fi<ringList.length?ringList[fi].ch:info.ch;};
+    const segTypeFuture=(d)=>{const fi=idx+d;return fi<ringList.length?ringList[fi].segType:info.segType;};
+
+    // หา segIdx ของริงนี้
+    const si=segs.findIndex(s=>info.chPos>=s.chFrom&&info.chPos<s.chTo);
+    const tally=si>=0?segTally[si]:null;
+
+    // คำนวณ target ratio จาก available candidates ของริงนี้จริงๆ
+    const ringCands = getCands(key, hl, vp, info.ch);
+    const {targetPctL:ringTgtL, targetPctR:ringTgtR} = calcTargetRatioFromCands(ringCands, info.ch);
+    // update tally target ให้เป็น running average จาก per-ring candidates
+    if(tally){
+      tally._sumTgtL = (tally._sumTgtL||0) + ringTgtL;
+      tally._sumTgtR = (tally._sumTgtR||0) + ringTgtR;
+      tally._ringCount = (tally._ringCount||0) + 1;
+      tally.targetPctL = tally._sumTgtL / tally._ringCount;
+      tally.targetPctR = tally._sumTgtR / tally._ringCount;
+    }
+    // คำนวณ bias: ถ้า R เกิน target >5% → prefer L; ถ้า L เกิน target >5% → prefer R
+    let ratioBias=null;
+    if(tally && tally.totalRings>0){
+      const done=tally.cntL+tally.cntR;
+      if(done>0){
+        const curPctR=tally.cntR/done*100;
+        const curPctL=tally.cntL/done*100;
+        if(curPctR - tally.targetPctR > 5) ratioBias='L';
+        else if(curPctL - tally.targetPctL > 5) ratioBias='R';
+      }
+    }
+
+    const planSegDir = si>=0 ? segs[si].dir : 'S';
+    const planCurveDir = info.segType==='ST' ? 'S' : planSegDir;
+    let chosen=bestKeyLookahead(key,hl,vp,info.ch,chFuture,3,planKeyHistory,info.segType,segTypeFuture,planCurveDir);
+
+    // Apply ratio bias: ถ้า chosen ขัด bias ให้หา alternative จาก pool
+    if(ratioBias && chosen && chosen.k[0]!==(ratioBias==='L'?'L':'R')){
+      const cands=getCands(key,hl,vp,info.ch);
+      const pool=filterCands(cands,planKeyHistory,info.segType==='ST');
+      const biasPool=pool.filter(c=>c.k[0]===ratioBias);
+      if(biasPool.length>0){
+        // เลือก best จาก biasPool โดย ringScore
+        const alt=biasPool.reduce((b,c)=>ringScore(c.ha,c.va)<ringScore(b.ha,b.va)?c:b);
+        // ใช้ alt ถ้า score ไม่แย่กว่า chosen มากเกิน 50
+        if(ringScore(alt.ha,alt.va) - ringScore(chosen.ha,chosen.va) < 50) chosen=alt;
+      }
+    }
+
+    planRows.push({...info,key,hl,vp,chosen,si});
+    planKeyHistory.push(chosen.k);
+    if(tally){ if(chosen.k[0]==='L') tally.cntL++; else tally.cntR++; }
+    if(chosen.k[0]==='L') cntL++; else cntR++;
+    if(info.segType==='ST') cntS++;
+    key=chosen.k;
+    // carry forward: hl หลัง build = hl + sgH (curve บวกใหม่ทุกริงใน getCands)
+    hl = +(hl + SEG[chosen.k].h).toFixed(1);
+    vp = +(vp + SEG[chosen.k].v).toFixed(1);
+  });
+
+  const total=planRows.length;
+  const totalDist=(total*SEG_W).toFixed(1);
+  const cntTC=ringList.filter(r=>r.segType==='TC').length;
+  const cntCR=ringList.filter(r=>r.segType==='CR').length;
+  const cntTCo=ringList.filter(r=>r.segType==='TCo').length;
+  const cntST=ringList.filter(r=>r.segType==='ST').length;
+
+  // Summary
+  const pctL=(cntL/total*100).toFixed(1);
+  const pctR=(cntR/total*100).toFixed(1);
+  const zoneStats=calcZoneStats(planRows, ringList);
+  const anyWarn=zoneStats.some(z=>z.warn);
+
+
+
+  window._lastPlanRows = planRows;
+  document.getElementById('planSummaryPanel').style.display='block';
+  document.getElementById('planZonePanel').style.display='block';
+  // Render zone ratio table separately
+
+  renderZoneTable(zoneStats);
+
+  // Summary panel
+  var summaryHTML = '<div class="summary-grid" style="grid-template-columns:repeat(4,1fr)">'
+    + '<div class="sm-cell"><div class="sm-lbl">Total Rings</div><div class="sm-val" style="color:var(--accent3)">'+total+'</div></div>'
+    + '<div class="sm-cell"><div class="sm-lbl">Total Dist.</div><div class="sm-val">'+totalDist+'m</div></div>'
+    + '<div class="sm-cell"><div class="sm-lbl">L-type Keys</div><div class="sm-val" style="color:var(--accent)">'+cntL+' <span style="font-size:13px">('+pctL+'%)</span></div></div>'
+    + '<div class="sm-cell"><div class="sm-lbl">R-type Keys</div><div class="sm-val" style="color:var(--accent2)">'+cntR+' <span style="font-size:13px">('+pctR+'%)</span></div></div>'
+    + '</div>'
+    + '<div style="margin-bottom:6px;font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);display:flex;align-items:center;gap:10px">'
+    + 'L vs R distribution (overall) '
+    + (anyWarn ? '<span class="warn-badge">&#9888; บาง zone เกิน &#177;5%</span>' : '<span class="ok-badge">&#10003; ทุก zone อยู่ใน target</span>')
+    + '</div>'
+    + '<div class="lr-bar-wrap"><div class="lr-bar">'
+    + '<div class="lr-bar-L" style="width:'+pctL+'%">L: '+cntL+' ('+pctL+'%)</div>'
+    + '<div class="lr-bar-R" style="width:'+pctR+'%">R: '+cntR+' ('+pctR+'%)</div>'
+    + '</div></div>';
+  document.getElementById('planSummary').innerHTML = summaryHTML;
+
+  // Key plan table
+  var ZONE_ROW={ST:'rST',TC:'rTC',CR:'rCR',TCo:'rTCo'};
+  var ZONE_BD={ST:'badge-ST',TC:'badge-TC',CR:'badge-CR',TCo:'badge-TCo'};
+  var planRowsHTML = planRows.map(function(r){
+    var rClass=ZONE_ROW[r.segType]||'';
+    var bClass=ZONE_BD[r.segType]||'';
+    var rStr=r.radius?(r.radius>=4000?'&#8805;4000':r.radius+'m'):'&#8212;';
+    var chStr=r.ch!==0?(r.ch>=0?'+':'')+r.ch.toFixed(1):'&#8212;';
+    var chColor=r.ch===0?'var(--muted)':r.dir==='R'?'#7dffb3':'#ff9966';
+    var rColor=r.radius?'var(--text)':'var(--muted)';
+    return '<tr class="'+rClass+'">'
+      + '<td>'+r.rn+'</td>'
+      + '<td style="color:var(--muted)">'+r.chPos.toFixed(3)+'</td>'
+      + '<td><span class="zbadge '+bClass+'">'+TYPE_LABEL[r.segType]+'</span></td>'
+      + '<td style="color:'+rColor+'">'+rStr+'</td>'
+      + '<td style="color:'+chColor+'">'+chStr+'</td>'
+      + '<td style="color:'+kColor(r.key)+';font-weight:bold">'+r.key+'</td>'
+      + '<td class="'+vc(r.hl)+'">'+r.hl.toFixed(1)+'</td>'
+      + '<td class="'+vc(r.vp)+'">'+r.vp.toFixed(1)+'</td>'
+      + '<td style="color:'+kColor(r.chosen.k)+';font-weight:bold">'+r.chosen.k+'</td>'
+      + '<td class="'+vc(r.chosen.ha)+'" style="font-weight:bold">'+fmt(r.chosen.ha)+'</td>'
+      + '<td class="'+vc(r.chosen.va)+'" style="font-weight:bold">'+fmt(r.chosen.va)+'</td>'
+      + '<td class="s'+(r.chosen.sH==='R/L'?'rl':'ll')+'">'+r.chosen.sH+'</td>'
+      + '<td class="s'+(r.chosen.sV==='L/U'?'lu':'oh')+'">'+r.chosen.sV+'</td>'
+      + '</tr>';
+  }).join('');
+  document.getElementById('planOut').innerHTML =
+    '<div class="kp-scroll"><table class="kp-tbl"><thead><tr>'
+    + '<th>RING</th><th>CHAINAGE</th><th>ZONE</th><th>RADIUS</th><th>*CURVE H</th>'
+    + '<th>KEY</th><th>H LEAD</th><th>V PLUMB</th>'
+    + '<th>NEXT KEY</th><th>H AFTER</th><th>V AFTER</th><th>SEG H</th><th>SEG V</th>'
+    + '</tr></thead><tbody>'+planRowsHTML+'</tbody></table></div>';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+// ============================================================
+// EXPORT TO EXCEL
+// ============================================================
+function exportPlan() {
+  if(!window._lastPlanRows || !window._lastPlanRows.length){
+    alert('กรุณา Generate Key Plan ก่อนครับ');
+    return;
+  }
+  const rows = window._lastPlanRows;
+
+  // Header
+  const headers = ['Ring','Chainage (m)','Zone','Radius (m)','*Curve H',
+    'Key','H Lead','V Plumb','Next Key','H After','V After','Seg H','Seg V'];
+
+  const ZONE_LABEL = {ST:'Straight',TC:'TC In',CR:'Circular',TCo:'TC Out'};
+  const data = [headers, ...rows.map(r => [
+    r.rn,
+    +r.chPos.toFixed(0),
+    ZONE_LABEL[r.segType]||r.segType,
+    r.radius ? (r.radius>=4000?'≥4000':r.radius) : '—',
+    r.ch!==0 ? +r.ch.toFixed(1) : 0,
+    r.key,
+    +r.hl.toFixed(1),
+    +r.vp.toFixed(1),
+    r.chosen.k,
+    +r.chosen.ha.toFixed(1),
+    +r.chosen.va.toFixed(1),
+    r.chosen.sH,
+    r.chosen.sV,
+  ])];
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+
+  // Column widths
+  ws['!cols'] = [
+    {wch:8},{wch:12},{wch:12},{wch:10},{wch:10},
+    {wch:8},{wch:10},{wch:10},
+    {wch:10},{wch:10},{wch:10},{wch:8},{wch:8}
+  ];
+
+  // Style header row
+  const headerStyle = {
+    font:{bold:true, color:{rgb:'FFFFFF'}},
+    fill:{fgColor:{rgb:'0F4C75'}},
+    alignment:{horizontal:'center'}
+  };
+  headers.forEach((_,ci) => {
+    const cell = XLSX.utils.encode_cell({r:0, c:ci});
+    if(ws[cell]) ws[cell].s = headerStyle;
+  });
+
+  // Color rows by zone type
+  const zoneColors = {ST:'F5F5F5', TC:'FFF8DC', CR:'E8F4FD', TCo:'FFF0E6'};
+  rows.forEach((r, ri) => {
+    const rowColor = zoneColors[r.segType]||'FFFFFF';
+    headers.forEach((_,ci) => {
+      const cell = XLSX.utils.encode_cell({r:ri+1, c:ci});
+      if(ws[cell]){
+        ws[cell].s = ws[cell].s||{};
+        ws[cell].s.fill = {fgColor:{rgb:rowColor}};
+        ws[cell].s.alignment = {horizontal:'center'};
+        // Color H After / V After red if >30
+        if((ci===9||ci===10) && Math.abs(ws[cell].v)>30){
+          ws[cell].s.font = {color:{rgb:'CC0000'}, bold:true};
+        } else if((ci===9||ci===10) && Math.abs(ws[cell].v)<30){
+          ws[cell].s.font = {color:{rgb:'006400'}, bold:true};
+        }
+        // Color Next Key by type
+        if(ci===8){
+          ws[cell].s.font = {color:{rgb: r.chosen.k[0]==='L'?'006B8E':'CC4400'}, bold:true};
+        }
+      }
+    });
+  });
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Key Plan');
+
+  // Add summary sheet
+  const summaryData = [
+    ['TBM Key Plan Summary'],
+    [],
+    ['Total Rings', rows.length],
+    ['Total Distance (m)', +(rows.length * 1.4).toFixed(1)],
+    ['L-type Keys', rows.filter(r=>r.chosen.k[0]==='L').length],
+    ['R-type Keys', rows.filter(r=>r.chosen.k[0]==='R').length],
+    ['%L', +((rows.filter(r=>r.chosen.k[0]==='L').length/rows.length)*100).toFixed(1)+'%'],
+    ['%R', +((rows.filter(r=>r.chosen.k[0]==='R').length/rows.length)*100).toFixed(1)+'%'],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
+  ws2['!cols'] = [{wch:20},{wch:15}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
+
+  // filename with timestamp
+  const now = new Date();
+  const ts = now.getFullYear()+
+    String(now.getMonth()+1).padStart(2,'0')+
+    String(now.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb, `TBM_KeyPlan_${ts}.xlsx`);
+}
+
+initKeyGrid();
+initCT();
+initPlanKeySelect();
+// Default alignment: Straight → TC in → Circular → TC out → Straight
+addSeg('ST');addSeg('TC');addSeg('CR');addSeg('TCo');addSeg('ST');
+calcRing();
+</script>
+</body>
+</html>
