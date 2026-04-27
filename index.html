@@ -4,137 +4,190 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TBM — Ring Key Calculator</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0a0c10;--panel:#0f1318;--panel2:#141920;--border:#1e2730;--accent:#00e5ff;--accent2:#ff6b35;--accent3:#7fff6b;--text:#cdd6e0;--muted:#4a5568;--warn:#ffcc00;--danger:#ff4444;}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#f5f5f4;
+  --surface:#ffffff;
+  --surface2:#f0efee;
+  --border:#e2e0de;
+  --border2:#c8c5c2;
+  --text:#1c1b1a;
+  --muted:#9b9793;
+  --soft:#6b6764;
+  --accent:#0f7b5a;
+  --accent2:#c0440a;
+  --warn:#a07000;
+  --danger:#c0280a;
+  --green:#0f7b5a;
+  --red:#c0280a;
+  --mono:'DM Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Barlow Condensed',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,.012) 2px,rgba(0,229,255,.012) 4px);pointer-events:none;z-index:0;}
-.wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:20px;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;}
 
-header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px;}
-.hl .lbl{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--accent);}
-.hl h1{font-size:36px;font-weight:900;color:#fff;line-height:1.1;}.hl h1 span{color:var(--accent);}
-.hr{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);text-align:right;line-height:1.8;}
-.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent3);box-shadow:0 0 8px var(--accent3);margin-right:4px;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.wrap{max-width:1400px;margin:0 auto;padding:0 28px 48px;}
 
-.tabs{display:flex;gap:0;border:1px solid var(--border);margin-bottom:18px;overflow:hidden;}
-.tab{flex:1;padding:11px;text-align:center;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);background:var(--panel2);transition:all .15s;border-right:1px solid var(--border);}
-.tab:last-child{border-right:none;}.tab:hover{color:var(--text);}.tab.active{background:var(--panel);color:var(--accent);border-bottom:2px solid var(--accent);}
+/* HEADER */
+header{display:flex;align-items:flex-end;justify-content:space-between;padding:28px 0 20px;margin-bottom:24px;border-bottom:1px solid var(--border);}
+.hl .lbl{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
+.hl h1{font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.3px;}
+.hl h1 span{color:var(--accent);}
+.hr{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.9;}
+.dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-right:5px;}
+
+/* TABS */
+.tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border);}
+.tab{padding:10px 20px;cursor:pointer;font-family:var(--sans);font-size:13px;font-weight:500;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;letter-spacing:0;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .tabcontent{display:none;}.tabcontent.show{display:block;}
 
-.panel{background:var(--panel);border:1px solid var(--border);padding:18px;position:relative;margin-bottom:14px;}
-.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);}
-.panel.warn-panel::before{background:linear-gradient(90deg,var(--warn),transparent);}
-.ptitle{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:14px;}
+.panel.warn-panel{border-color:rgba(160,112,0,.2);}
+.ptitle{font-family:var(--mono);font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
 .ptitle::after{content:'';flex:1;height:1px;background:var(--border);}
 
+/* LAYOUT */
 .g2{display:grid;grid-template-columns:360px 1fr;gap:16px;}
 .g2f{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 @media(max-width:900px){.g2,.g3{grid-template-columns:1fr;}}
 
-.field{margin-bottom:11px;}
-.field label{display:block;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;font-family:'Share Tech Mono',monospace;}
-input[type=number],select{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:18px;padding:8px 11px;outline:none;transition:border-color .2s;appearance:none;}
-input:focus,select:focus{border-color:var(--accent);}
-select{cursor:pointer;font-size:13px;}select option{background:#1a1f28;}
-.divider{height:1px;background:var(--border);margin:11px 0;}
+/* FIELDS */
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:11px;font-weight:500;color:var(--soft);margin-bottom:5px;letter-spacing:0.3px;}
+input[type=number],select{
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);font-family:var(--mono);font-size:16px;
+  padding:9px 12px;outline:none;transition:border-color .15s;
+  appearance:none;border-radius:4px;
+}
+input:focus,select:focus{border-color:var(--border2);background:var(--surface);}
+select{cursor:pointer;font-size:13px;font-family:var(--sans);}
+select option{background:var(--surface);}
+.divider{height:1px;background:var(--border);margin:14px 0;}
 
-.key-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:11px;}
-.key-btn{background:var(--panel2);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:12px;padding:7px 3px;cursor:pointer;transition:all .15s;text-align:center;}
-.key-btn:hover{border-color:var(--accent);color:var(--accent);}
-.key-btn.active.L-type{background:var(--accent);border-color:var(--accent);color:#000;font-weight:bold;}
-.key-btn.active.R-type{background:var(--accent2);border-color:var(--accent2);color:#000;font-weight:bold;}
+/* KEY GRID */
+.key-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:12px;}
+.key-btn{
+  background:var(--surface2);border:1px solid var(--border);color:var(--muted);
+  font-family:var(--mono);font-size:12px;padding:7px 3px;
+  cursor:pointer;transition:all .12s;text-align:center;border-radius:3px;
+}
+.key-btn:hover{border-color:var(--border2);color:var(--text);}
+.key-btn.active.L-type{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500;}
+.key-btn.active.R-type{background:var(--accent2);border-color:var(--accent2);color:#fff;font-weight:500;}
 
-.ctbl-wrap{border:1px solid var(--border);margin-bottom:10px;overflow:hidden;}
-.ctbl{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:12px;}
-.ctbl th{background:var(--panel2);padding:5px 7px;text-align:center;color:var(--muted);font-size:9px;border-bottom:1px solid var(--border);font-weight:normal;}
-.ctbl td{padding:5px 7px;text-align:center;border-bottom:1px solid rgba(30,39,48,.5);cursor:pointer;transition:background .1s;}
-.ctbl tr:last-child td{border-bottom:none;}.ctbl tr:hover td{background:rgba(0,229,255,.04);}
-.ctbl tr.sel td{background:rgba(0,229,255,.09)!important;}.ctbl tr.sel td:first-child{color:var(--accent);font-weight:bold;}
-.rv{color:#7dffb3;}.lv{color:#ff9966;}.dv{color:var(--warn);}
-
+/* DIR TOGGLE */
 .dir-tog{display:flex;gap:6px;margin-bottom:10px;}
-.dir-btn{flex:1;padding:8px 4px;text-align:center;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:12px;border:1px solid var(--border);color:var(--muted);transition:all .15s;background:var(--panel2);}
-.dir-btn:hover{border-color:var(--accent);color:var(--accent);}
-.dir-btn.aR{background:rgba(0,229,255,.1);border-color:var(--accent);color:var(--accent);}
-.dir-btn.aL{background:rgba(255,107,53,.1);border-color:var(--accent2);color:var(--accent2);}
-.dir-btn.aS{background:rgba(127,255,107,.1);border-color:var(--accent3);color:var(--accent3);}
+.dir-btn{
+  flex:1;padding:8px 4px;text-align:center;cursor:pointer;
+  font-family:var(--sans);font-size:12px;font-weight:500;
+  border:1px solid var(--border);color:var(--muted);
+  transition:all .12s;background:var(--surface2);border-radius:4px;
+}
+.dir-btn:hover{border-color:var(--border2);color:var(--text);}
+.dir-btn.aR{border-color:var(--accent);color:var(--accent);background:rgba(15,123,90,.06);}
+.dir-btn.aL{border-color:var(--accent2);color:var(--accent2);background:rgba(192,68,10,.06);}
+.dir-btn.aS{border-color:var(--border2);color:var(--text);background:var(--surface);}
 
-.cv-prev{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:11px;}
-.cv-cell{background:var(--panel2);padding:7px 9px;text-align:center;}
-.cv-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:2px;font-family:'Share Tech Mono',monospace;}
-.cv-val{font-size:15px;font-family:'Share Tech Mono',monospace;}
+/* CURVE PREVIEW */
+.cv-prev{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:12px;border-radius:4px;overflow:hidden;}
+.cv-cell{background:var(--surface2);padding:8px 10px;text-align:center;}
+.cv-lbl{font-size:10px;color:var(--muted);margin-bottom:2px;font-weight:500;}
+.cv-val{font-size:15px;font-family:var(--mono);}
 
-.calc-btn{width:100%;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:4px;text-transform:uppercase;padding:12px;cursor:pointer;transition:all .2s;margin-top:4px;}
-.calc-btn:hover{background:var(--accent);color:#000;}
-.calc-btn.wb{border-color:var(--warn);color:var(--warn);}.calc-btn.wb:hover{background:var(--warn);color:#000;}
+/* BUTTONS */
+.calc-btn{
+  width:100%;background:var(--text);border:1px solid var(--text);color:var(--surface);
+  font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:0.5px;
+  text-transform:uppercase;padding:12px;cursor:pointer;transition:all .15s;border-radius:4px;
+}
+.calc-btn:hover{background:var(--soft);border-color:var(--soft);}
+.calc-btn.wb{background:transparent;border-color:var(--warn);color:var(--warn);}
+.calc-btn.wb:hover{background:rgba(160,112,0,.08);}
 
-.statebox{display:grid;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:11px;}
-.sc{background:var(--panel2);padding:9px 11px;}
-.sc .sl{font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;font-family:'Share Tech Mono',monospace;}
-.sc .sv{font-size:18px;color:#fff;font-weight:bold;font-family:'Share Tech Mono',monospace;}
+/* STATE BOXES */
+.statebox{display:grid;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:12px;border-radius:4px;overflow:hidden;}
+.sc{background:var(--surface2);padding:10px 14px;}
+.sc .sl{font-size:10px;color:var(--muted);font-weight:500;margin-bottom:3px;}
+.sc .sv{font-size:18px;color:var(--text);font-weight:600;font-family:var(--mono);}
 
-.seg-tbl{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:12px;margin-bottom:10px;}
-.seg-tbl th{text-align:center;padding:5px 7px;color:var(--muted);font-size:9px;border-bottom:1px solid var(--border);font-weight:normal;white-space:nowrap;}
+/* CANDIDATES TABLE */
+.seg-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-bottom:10px;}
+.seg-tbl th{text-align:center;padding:7px 8px;color:var(--muted);font-size:10px;border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap;font-family:var(--sans);}
 .seg-tbl th.tl{text-align:left;padding-left:10px;}
-.seg-tbl td{padding:7px 7px;border-bottom:1px solid rgba(30,39,48,.5);text-align:center;vertical-align:middle;}
-.seg-tbl tr:hover td{background:rgba(0,229,255,.03);}
-.seg-tbl tr.best-row td{background:rgba(127,255,107,.05);}
-.kc{font-size:16px;font-weight:900;text-align:left!important;padding-left:10px!important;}
+.seg-tbl td{padding:8px;border-bottom:1px solid var(--border);text-align:center;vertical-align:middle;}
+.seg-tbl tr:last-child td{border-bottom:none;}
+.seg-tbl tr:hover td{background:var(--surface2);}
+.seg-tbl tr.best-row td{background:rgba(15,123,90,.05);}
+.kc{font-size:14px;font-weight:600;text-align:left!important;padding-left:10px!important;}
 .kc.L{color:var(--accent);}.kc.R{color:var(--accent2);}
-.vp2{color:#7dffb3;}.vn2{color:#ff7d7d;}.vz2{color:var(--text);}
+.vp2{color:var(--green);}.vn2{color:var(--red);}.vz2{color:var(--text);}
 .srl{color:var(--accent);}.sll{color:var(--accent2);}
-.slu{color:#a78bfa;}.soh{color:var(--warn);}
-.fbox{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);padding:8px 10px;border:1px solid var(--border);line-height:1.9;margin-top:8px;}
-.no-result{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);text-align:center;padding:32px;border:1px dashed var(--border);}
+.slu{color:#6d4fc4;}.soh{color:var(--warn);}
+.fbox{font-family:var(--mono);font-size:10px;color:var(--muted);padding:10px 12px;border:1px solid var(--border);line-height:1.9;margin-top:8px;background:var(--surface2);border-radius:4px;}
 
-/* ---- ALIGNMENT EDITOR ---- */
-.aln-table{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:15px;margin-bottom:12px;}
-.aln-table th{background:var(--panel2);padding:10px 12px;color:var(--muted);font-size:10px;letter-spacing:1px;border-bottom:1px solid var(--border);text-align:center;font-weight:normal;white-space:nowrap;}
-.aln-table td{padding:6px 6px;border-bottom:1px solid rgba(30,39,48,.4);vertical-align:middle;}
+/* ALIGNMENT TABLE */
+.aln-table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:13px;margin-bottom:12px;}
+.aln-table th{background:var(--surface2);padding:9px 10px;color:var(--muted);font-size:10px;font-weight:500;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;}
+.aln-table td{padding:6px 6px;border-bottom:1px solid var(--border);vertical-align:middle;}
 .aln-table tr:last-child td{border-bottom:none;}
-.aln-table input{font-size:18px;padding:10px 10px;width:100%;min-width:80px;}
-.aln-table select{font-size:16px;padding:10px 8px;width:100%;}
-.type-badge{display:inline-block;padding:2px 7px;font-size:10px;letter-spacing:1px;border:1px solid;}
-.badge-ST{border-color:var(--muted);color:var(--muted);}
-.badge-TC{border-color:var(--warn);color:var(--warn);}
-.badge-CR{border-color:var(--accent);color:var(--accent);}
-.badge-TCo{border-color:#ff9966;color:#ff9966;}
-.del-btn{background:none;border:1px solid var(--danger);color:var(--danger);cursor:pointer;padding:4px 9px;font-family:'Share Tech Mono',monospace;font-size:11px;transition:all .15s;}
-.del-btn:hover{background:var(--danger);color:#000;}
+.aln-table input{font-size:14px;padding:7px 10px;width:100%;min-width:80px;border-radius:3px;}
+.aln-table select{font-size:13px;padding:7px 10px;width:100%;border-radius:3px;}
+.type-badge{display:inline-block;padding:3px 8px;font-size:10px;font-weight:500;border:1px solid;border-radius:3px;}
+.badge-ST{border-color:var(--border2);color:var(--soft);}
+.badge-TC{border-color:rgba(160,112,0,.4);color:var(--warn);}
+.badge-CR{border-color:rgba(15,123,90,.4);color:var(--accent);}
+.badge-TCo{border-color:rgba(192,68,10,.4);color:var(--accent2);}
+.del-btn{background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;padding:5px 10px;font-size:12px;border-radius:3px;transition:all .12s;}
+.del-btn:hover{border-color:var(--danger);color:var(--danger);}
 .add-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
-.add-btn{padding:8px 14px;background:var(--panel2);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;letter-spacing:1px;}
-.add-btn:hover{border-color:var(--accent);color:var(--accent);}
-.add-btn.warn:hover{border-color:var(--warn);color:var(--warn);}
+.add-btn{padding:8px 14px;background:var(--surface);border:1px solid var(--border);color:var(--soft);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;transition:all .12s;border-radius:4px;}
+.add-btn:hover{border-color:var(--border2);color:var(--text);}
 
 /* KEY PLAN TABLE */
 .kp-scroll{max-height:600px;overflow-y:auto;}
-.kp-scroll::-webkit-scrollbar{width:4px;}.kp-scroll::-webkit-scrollbar-thumb{background:var(--border);}
-.kp-tbl{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:12px;}
-.kp-tbl th{position:sticky;top:0;background:var(--panel2);padding:6px 7px;color:var(--muted);font-size:9px;letter-spacing:1px;border-bottom:1px solid var(--border);font-weight:normal;text-align:center;z-index:2;white-space:nowrap;}
-.kp-tbl td{padding:5px 7px;border-bottom:1px solid rgba(30,39,48,.35);text-align:center;white-space:nowrap;}
-.kp-tbl tr.rST td{background:rgba(255,255,255,.01);}
-.kp-tbl tr.rTC td{background:rgba(255,204,0,.04);}
-.kp-tbl tr.rCR td{background:rgba(0,229,255,.02);}
-.kp-tbl tr.rTCo td{background:rgba(255,153,102,.04);}
-.kp-tbl .zbadge{font-size:9px;padding:1px 5px;border:1px solid;}
+.kp-scroll::-webkit-scrollbar{width:4px;}.kp-scroll::-webkit-scrollbar-thumb{background:var(--border2);}
+.kp-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;}
+.kp-tbl th{position:sticky;top:0;background:var(--surface2);padding:7px 8px;color:var(--muted);font-size:10px;font-weight:500;border-bottom:1px solid var(--border);text-align:center;z-index:2;white-space:nowrap;font-family:var(--sans);}
+.kp-tbl td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;}
+.kp-tbl tr:last-child td{border-bottom:none;}
+.kp-tbl tr.rST td{background:var(--surface);}
+.kp-tbl tr.rTC td{background:#fffbf0;}
+.kp-tbl tr.rCR td{background:#f0faf6;}
+.kp-tbl tr.rTCo td{background:#fff5f0;}
+.zbadge{font-size:9px;padding:2px 6px;border:1px solid;border-radius:2px;font-family:var(--sans);font-weight:500;}
 
 /* SUMMARY */
-.summary-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:14px;}
-.summary-grid.sm{grid-template-columns:repeat(3,1fr);}
-.sm-cell{background:var(--panel2);padding:10px 12px;text-align:center;}
-.sm-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;font-family:'Share Tech Mono',monospace;}
-.sm-val{font-size:20px;font-weight:bold;font-family:'Share Tech Mono',monospace;}
+.summary-grid{display:grid;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:14px;border-radius:4px;overflow:hidden;}
+.sm-cell{background:var(--surface2);padding:12px 16px;text-align:center;}
+.sm-lbl{font-size:10px;color:var(--muted);font-weight:500;margin-bottom:4px;}
+.sm-val{font-size:20px;font-weight:600;font-family:var(--mono);}
 
 /* LR BAR */
-.lr-bar-wrap{margin:12px 0;}
-.lr-bar{height:28px;display:flex;border:1px solid var(--border);overflow:hidden;}
-.lr-bar-L{background:rgba(0,229,255,.25);display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent);transition:width .4s;}
-.lr-bar-R{background:rgba(255,107,53,.25);display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent2);transition:width .4s;}
-.lr-bar-S{background:rgba(127,255,107,.15);display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent3);transition:width .4s;}
+.lr-bar-wrap{margin:10px 0;}
+.lr-bar{height:24px;display:flex;border:1px solid var(--border);overflow:hidden;border-radius:3px;}
+.lr-bar-L{background:rgba(15,123,90,.15);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--accent);font-weight:500;}
+.lr-bar-R{background:rgba(192,68,10,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--accent2);font-weight:500;}
+
+/* ZONE RATIO TABLE */
+.zone-ratio-tbl{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:12px;margin:8px 0;}
+.zone-ratio-tbl th{background:var(--surface2);padding:8px 10px;color:var(--muted);font-size:10px;font-weight:500;border-bottom:1px solid var(--border);text-align:center;}
+.zone-ratio-tbl td{padding:10px;border-bottom:1px solid var(--border);text-align:center;}
+.zone-ratio-tbl tr:last-child td{border-bottom:none;}
+.ratio-bar{height:14px;display:flex;border:1px solid var(--border);overflow:hidden;min-width:100px;border-radius:2px;}
+.ratio-bar-L{background:rgba(15,123,90,.2);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--accent);}
+.ratio-bar-R{background:rgba(192,68,10,.15);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--accent2);}
+.warn-badge{display:inline-block;padding:2px 8px;font-size:10px;border:1px solid var(--danger);color:var(--danger);border-radius:3px;}
+.ok-badge{display:inline-block;padding:2px 8px;font-size:10px;border:1px solid rgba(15,123,90,.4);color:var(--accent);border-radius:3px;}
+
+.no-result{font-size:13px;color:var(--muted);text-align:center;padding:36px;border:1px dashed var(--border);border-radius:4px;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -179,16 +232,35 @@ select{cursor:pointer;font-size:13px;}select option{background:#1a1f28;}
             <div class="dir-btn aS" onclick="setDir('S')" id="dS">Straight</div>
           </div>
         </div>
-        <div class="field"><label>H Curve Table</label>
-          <div class="ctbl-wrap"><table class="ctbl">
-            <thead><tr><th>Radius</th><th>R (+)</th><th>L (−)</th><th>°</th></tr></thead>
-            <tbody id="ctBody"></tbody>
-          </table></div>
+        <div class="field">
+          <label>Radius (m)</label>
+          <input type="number" id="curveRadius" value="" placeholder="เช่น 600 (ว่าง = Straight)" min="160" step="50"
+            oninput="onRadiusInput()">
         </div>
         <div class="cv-prev">
           <div class="cv-cell"><div class="cv-lbl">Radius</div><div class="cv-val" id="pvR" style="color:var(--accent3)">Straight</div></div>
           <div class="cv-cell" style="border-left:1px solid var(--border)"><div class="cv-lbl">*Curve H</div><div class="cv-val" id="pvH" style="color:var(--muted)">0</div></div>
           <div class="cv-cell" style="border-left:1px solid var(--border)"><div class="cv-lbl">*Curve V</div><div class="cv-val" style="color:var(--muted)">0</div></div>
+        </div>
+        <div class="divider"></div>
+        <div class="ptitle">V Curve (Vertical)</div>
+        <div class="field">
+          <label>ทิศทาง V Curve</label>
+          <div class="dir-tog">
+            <div class="dir-btn" onclick="setVDir('U')" id="vdU">U (Up)</div>
+            <div class="dir-btn" onclick="setVDir('D')" id="vdD">D (Down)</div>
+            <div class="dir-btn aS" onclick="setVDir('S')" id="vdS">Straight</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>V Radius (m)</label>
+          <input type="number" id="vCurveRadius" value="" placeholder="เช่น 2000 (ว่าง = Straight)" min="160" step="50"
+            oninput="refreshVPrev()">
+        </div>
+        <div class="cv-prev" id="vCurvePrev">
+          <div class="cv-cell"><div class="cv-lbl">V Radius</div><div class="cv-val" id="pvVR" style="color:var(--muted)">Straight</div></div>
+          <div class="cv-cell" style="border-left:1px solid var(--border)"><div class="cv-lbl">*Curve V</div><div class="cv-val" id="pvV" style="color:var(--muted)">0</div></div>
+          <div class="cv-cell" style="border-left:1px solid var(--border)"><div class="cv-lbl">Direction</div><div class="cv-val" id="pvVDir" style="color:var(--muted)">—</div></div>
         </div>
         <button class="calc-btn" onclick="calcRing()">▶ CALCULATE NEXT RING</button>
       </div>
@@ -232,11 +304,15 @@ select{cursor:pointer;font-size:13px;}select option{background:#1a1f28;}
       <div style="overflow-x:auto">
         <table class="aln-table" id="alnTable">
           <thead><tr>
-            <th>#</th><th>Type</th><th>Ch. จาก (m)</th><th>Ch. ถึง (m)</th>
-            <th>Radius (m)</th><th>Direction</th><th>Rings</th><th></th>
+            <th>#</th><th>Type</th><th>Start (m)</th><th>Finish (m)</th>
+            <th>H Radius</th><th>H Dir</th><th>V Radius</th><th>V Dir</th><th>Rings</th><th></th>
           </tr></thead>
           <tbody id="alnBody"></tbody>
         </table>
+      </div>
+      <div id="alnTotalDist" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);padding:8px 10px;background:var(--panel2);border:1px solid var(--border);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+        <span>Total Distance</span>
+        <span id="alnDistVal" style="color:var(--accent3);font-size:16px;font-weight:bold">— m</span>
       </div>
       <div class="add-row">
         <button class="add-btn" onclick="addSeg('ST')">+ Straight</button>
@@ -337,11 +413,12 @@ function interpCH(radiusM, dir){
   return +v.toFixed(2);
 }
 
-function getCands(key,hl,vp,ch){
+function getCands(key,hl,vp,ch,cv){
+  cv=cv||0;
   return (NRM[key]||[]).map((k,i)=>{
     const s=SEG[k]||{h:0,v:0};
     const ha=+(hl+s.h+ch).toFixed(1);
-    const va=+(vp+s.v).toFixed(1);
+    const va=+(vp+s.v+cv).toFixed(1);
     return{k,sgH:s.h,sgV:s.v,ha,va,sH:ha>=0?'R/L':'L/L',sV:va>=0?'L/U':'O/H',rank:i+1};
   });
 }
@@ -349,33 +426,23 @@ function getCands(key,hl,vp,ch){
 // score ริงเดียว — รู้จัก curve direction และ tight curve
 // curveDir: 'R'|'L'|'S', isTight: radius <= 300m
 // สำหรับ tight curve (R≤300): prefer H After อยู่ฝั่งเดียวกับโค้ง (R→ลบ, L→บวก) แต่ไม่เกิน ±30
-function ringScore(ha, va, curveDir, tight){
-  curveDir = curveDir||'S'; tight = tight||false;
-  const vOk = Math.abs(va)<30;
-
-  let hScore;
-  if(tight && curveDir!=='S'){
-    // Tight curve: ideal คือ H ฝั่งเดียวกับโค้ง และ ≤ 30
-    // R curve: H ควรเป็น ลบ ระหว่าง -30 ถึง 0
-    // L curve: H ควรเป็น บวก ระหว่าง 0 ถึง +30
-    const wantNeg = curveDir==='R';
-    const onCorrectSide = wantNeg ? (ha<=0) : (ha>=0);
-    const withinLimit = Math.abs(ha)<=30;
-    if(onCorrectSide && withinLimit)
-      hScore = Math.abs(ha);                   // ดีที่สุด: ฝั่งถูก + ใน ±30
-    else if(onCorrectSide && !withinLimit)
-      hScore = 60 + Math.abs(ha);              // ฝั่งถูกแต่เกิน 30
-    else if(!onCorrectSide && withinLimit)
-      hScore = 100 + Math.abs(ha);             // ฝั่งผิดแต่ใน 30
-    else
-      hScore = 200 + Math.abs(ha);             // ฝั่งผิดและเกิน 30
-  } else {
-    // Straight / wide curve: ±30 สมมาตร
-    hScore = Math.abs(ha)<30 ? Math.abs(ha) : 100+Math.abs(ha);
+function axisScore(val,dir,tight){
+  if(tight&&dir!=='S'){
+    const wantNeg=dir==='R'||dir==='D';
+    const onSide=wantNeg?(val<=0):(val>=0);
+    const inLim=Math.abs(val)<=30;
+    if(onSide&&inLim)  return Math.abs(val);
+    if(onSide&&!inLim) return 60+Math.abs(val);
+    if(!onSide&&inLim) return 100+Math.abs(val);
+    return 200+Math.abs(val);
   }
-
-  const vScore = vOk ? Math.abs(va) : 100+Math.abs(va);
-  return hScore + vScore;
+  return Math.abs(val)<30?Math.abs(val):100+Math.abs(val);
+}
+function ringScore(ha,va,curveDir,tight,vCurveDir,cv){
+  curveDir=curveDir||'S'; tight=tight||false;
+  vCurveDir=vCurveDir||'S'; cv=cv||0;
+  const vTight=Math.abs(cv)>28;
+  return axisScore(ha,curveDir,tight)+axisScore(va,vCurveDir,vTight);
 }
 
 // Opposite pairs — keys ที่ balance กันดี (position ~180° apart on ring)
@@ -491,13 +558,15 @@ function getTightCurvePool(cands, ch, curveDir){
 // lookahead depth ริง — keyHistory ใช้ตรวจ pattern + type run
 // segTypeFuture(d): 'ST'|'TC'|'CR'|'TCo' ของริงอนาคต (null = ไม่รู้ → ไม่ apply same-type rule)
 // curveDir: 'R'|'L'|'S' ใช้สำหรับ tight curve preference
-function bestKeyLookahead(key, hl, vp, ch, chFuture, depth, keyHistory, segType, segTypeFuture, curveDir){
+function bestKeyLookahead(key, hl, vp, ch, cv, chFuture, depth, keyHistory, segType, segTypeFuture, curveDir, vCurveDir){
   depth = depth||3;
   keyHistory = keyHistory||[];
   segType = segType||null;
   curveDir = curveDir||'S';
+  vCurveDir = vCurveDir||'S';
+  cv = cv||0;
   const isStraight = segType==='ST';
-  const cands = getCands(key,hl,vp,ch);
+  const cands = getCands(key,hl,vp,ch,cv);
   if(!cands.length) return null;
 
   const filtered = filterCands(cands, keyHistory, isStraight);
@@ -511,9 +580,8 @@ function bestKeyLookahead(key, hl, vp, ch, chFuture, depth, keyHistory, segType,
   let bestC=null, bestScore=Infinity;
   pool.forEach(c=>{
     const isTight = Math.abs(ch)>28;
-    let score = ringScore(c.ha, c.va, curveDir, isTight);
+    let score = ringScore(c.ha, c.va, curveDir, isTight, vCurveDir, cv);
     let k2=c.k;
-    // carry forward ไม่รวม ch เพื่อป้องกัน double-count ใน sub-depth
     let h2 = +(hl + SEG[c.k].h).toFixed(1);
     let v2 = +(vp + SEG[c.k].v).toFixed(1);
     const hist2 = [...keyHistory, c.k];
@@ -603,7 +671,7 @@ function kColor(k){return k[0]==='L'?'var(--accent)':'var(--accent2)';}
 // ============================================================
 // TAB 1
 // ============================================================
-let curKey='R1',curDir='S',curCI=null;
+let curKey='R1',curDir='S';
 
 function switchTab(t){
   ['ring','plan'].forEach(x=>{
@@ -631,19 +699,10 @@ function pickKey(k){
 }
 
 function initCT(){
-  const rows=[...HCT].reverse();
-  document.getElementById('ctBody').innerHTML=rows.map((c,i)=>{
-    const oi=HCT.length-1-i;
-    return`<tr id="cr${oi}" onclick="pickCurve(${oi})">
-      <td>${c.r}</td><td class="rv">+${c.R.toFixed(1)}</td>
-      <td class="lv">${c.L.toFixed(1)}</td><td class="dv">${c.d.toFixed(1)}</td></tr>`;
-  }).join('');
+  // No table to init - using radius input now
 }
 
-function pickCurve(i){
-  curCI=i;
-  document.querySelectorAll('#ctBody tr').forEach(r=>r.classList.remove('sel'));
-  document.getElementById('cr'+i).classList.add('sel');
+function onRadiusInput(){
   refreshPrev();
 }
 
@@ -654,17 +713,55 @@ function setDir(d){
 }
 
 function getCH(){
-  if(curDir==='S'||curCI===null) return 0;
-  // dir=R ใช้ col L (ลบ), dir=L ใช้ col R (บวก) — verified จาก Excel
-  return curDir==='R'?HCT[curCI].L:HCT[curCI].R;
+  if(curDir==='S') return 0;
+  const rInput = document.getElementById('curveRadius');
+  const rv = rInput ? parseFloat(rInput.value) : NaN;
+  if(!rv || isNaN(rv) || rv <= 0) return 0;
+  return interpCH(rv, curDir);
+}
+
+function getCV(){
+  const vDir = document.getElementById('vCurveDir') ? document.getElementById('vCurveDir').value : 'S';
+  if(vDir==='S') return 0;
+  const rv = parseFloat(document.getElementById('vCurveRadius').value||'0');
+  if(!rv || isNaN(rv) || rv<=0) return 0;
+  // V curve: Up(U) = ใช้ col R (บวก), Down(D) = ใช้ col L (ลบ) — เหมือน H curve convention
+  return interpCH(rv, vDir==='U'?'R':'L');
 }
 
 function refreshPrev(){
   const ch=getCH();
-  document.getElementById('pvR').textContent=curDir==='S'?'Straight':(curCI!==null?HCT[curCI].r:'-');
+  const rInput = document.getElementById('curveRadius');
+  const rv = rInput ? parseFloat(rInput.value) : NaN;
+  document.getElementById('pvR').textContent = curDir==='S'?'Straight':(rv&&!isNaN(rv)?rv+'m':'-');
   const el=document.getElementById('pvH');
   el.textContent=(ch>=0?'+':'')+ch.toFixed(1);
   el.style.color=ch===0?'var(--muted)':'var(--accent)';
+}
+
+let vDir='S';
+function setVDir(d){
+  vDir=d;
+  ['U','D','S'].forEach(x=>{
+    const el=document.getElementById('vd'+x);
+    if(!el) return;
+    el.className='dir-btn'+(x===d?(d==='S'?' aS':d==='U'?' aR':' aL'):'');
+  });
+  refreshVPrev();
+}
+
+function refreshVPrev(){
+  const cv=getCV();
+  const rv=parseFloat(document.getElementById('vCurveRadius')?.value||'0');
+  const el=document.getElementById('pvV');
+  const elR=document.getElementById('pvVR');
+  const elD=document.getElementById('pvVDir');
+  if(elR) elR.textContent = vDir==='S'?'Straight':(rv>0?rv+'m':'-');
+  if(el){
+    el.textContent=(cv>=0?'+':'')+cv.toFixed(1);
+    el.style.color=cv===0?'var(--muted)':'var(--accent)';
+  }
+  if(elD) elD.textContent = vDir==='S'?'—':vDir==='U'?'↑ Up':'↓ Down';
 }
 
 function calcRing(){
@@ -672,9 +769,10 @@ function calcRing(){
   const hl=parseFloat(document.getElementById('hLead').value)||0;
   const vp=parseFloat(document.getElementById('vPlumb').value)||0;
   const ch=getCH();
-  const tab1SegType = curDir==='S' ? 'ST' : 'CR';
-  const cands=getCands(curKey,hl,vp,ch);
-  const best=bestKeyLookahead(curKey,hl,vp,ch,null,3,[],tab1SegType,null,curDir);
+  const tab1SegType = curDir==='S' && vDir==='S' ? 'ST' : 'CR';
+  const cv=getCV();
+  const cands=getCands(curKey,hl,vp,ch,cv);
+  const best=bestKeyLookahead(curKey,hl,vp,ch,cv,null,3,[],tab1SegType,null,curDir,vDir);
   const chLbl=curDir==='S'?'Straight':(curCI!==null?HCT[curCI].r+' ('+curDir+')':'-');
 
   let html=`<div class="statebox" style="grid-template-columns:repeat(3,1fr)">
@@ -711,10 +809,11 @@ function calcRing(){
   let hist10=[curKey];
   const h10SegType = curDir==='S' ? 'ST' : 'CR';
   // ratio tally สำหรับ Tab1
+  const cv2=getCV();
   let h10tally = {cntL:0, cntR:0, targetPctL:50, targetPctR:50, _sumTgtL:0, _sumTgtR:0, _rc:0};
   for(let i=0;i<10;i++){
     // คำนวณ per-ring target ratio จาก available candidates
-    const rc10 = getCands(key2,hl2,vp2,ch);
+    const rc10 = getCands(key2,hl2,vp2,ch,cv2||0);
     const {targetPctL:tL10, targetPctR:tR10} = calcTargetRatioFromCands(rc10, ch);
     h10tally._sumTgtL += tL10; h10tally._sumTgtR += tR10; h10tally._rc++;
     h10tally.targetPctL = h10tally._sumTgtL / h10tally._rc;
@@ -730,7 +829,7 @@ function calcRing(){
       else if(curPctL10 - h10tally.targetPctL > 5) ratioBias10 = 'R';
     }
 
-    let chosen = bestKeyLookahead(key2,hl2,vp2,ch,null,3,hist10,h10SegType,null);
+    let chosen = bestKeyLookahead(key2,hl2,vp2,ch,cv2,null,3,hist10,h10SegType,null,h10SegType==='ST'?'S':curDir,h10SegType==='ST'?'S':vDir);
 
     // apply ratio bias ถ้าจำเป็น
     if(ratioBias10 && chosen && chosen.k[0] !== ratioBias10){
@@ -946,7 +1045,7 @@ function addSeg(type){
   // auto-fill chainage from last segment end
   const lastCh=segs.length>0?segs[segs.length-1].chTo:parseFloat(document.getElementById('planCh0').value)||0;
   const defLen={ST:200,TC:70,CR:400,TCo:70}[type];
-  segs.push({id,type,chFrom:+(lastCh).toFixed(3),chTo:+(lastCh+defLen).toFixed(3),radius:500,dir:'R'});
+  segs.push({id,type,chFrom:+(lastCh).toFixed(3),chTo:+(lastCh+defLen).toFixed(3),radius:500,dir:'R',vRadius:0,vDir:'S'});
   renderAlnTable();
 }
 
@@ -974,6 +1073,13 @@ function renderAlnTable(){
         <option value="R" ${s.dir==='R'?'selected':''}>R</option>
         <option value="L" ${s.dir==='L'?'selected':''}>L</option>
       </select>`:'<span style="color:var(--muted);font-size:14px;padding:10px;display:block;text-align:center">—</span>'}</td>
+      <td style="min-width:90px"><input type="number" value="${s.vRadius||''}" min="160" step="50"
+        placeholder="V Radius" onchange="segs[${i}].vRadius=parseFloat(this.value)||0"></td>
+      <td style="min-width:70px"><select onchange="segs[${i}].vDir=this.value">
+        <option value="S" ${(s.vDir||'S')==='S'?'selected':''}>Straight</option>
+        <option value="U" ${s.vDir==='U'?'selected':''}>Up ↑</option>
+        <option value="D" ${s.vDir==='D'?'selected':''}>Down ↓</option>
+      </select></td>
       <td style="font-family:'Share Tech Mono',monospace;color:${nRings>0?'var(--text)':'var(--danger)'};font-size:16px;text-align:center">${nRings>0?nRings:'!'}</td>
       <td><button class="del-btn" onclick="removeSeg(${s.id})">✕</button></td>
     </tr>`;
@@ -990,11 +1096,14 @@ function buildRingList(startCh, startRing){
     const nRings=Math.ceil(len/SEG_W);
     for(let i=0;i<nRings;i++){
       const sFrac=(i+1)*SEG_W; // distance within segment
-      let radius=null,ch=0;
+      let radius=null,ch=0,cv=0,segVDir='S';
+      const vRv=s.vRadius||0;
+      const vDirMap=s.vDir==='U'?'R':s.vDir==='D'?'L':'S';
       if(s.type==='ST'){
-        radius=null;ch=0;
+        radius=null;ch=0;cv=0;segVDir='S';
       } else if(s.type==='CR'){
         radius=s.radius;ch=interpCH(s.radius,s.dir);
+        cv=vRv>0?interpCH(vRv,vDirMap):0; segVDir=s.vDir||'S';
       } else {
         // TC in: radius goes from ∞ → R over length L; offset from start
         // TC out: radius goes from R → ∞; use mirror
@@ -1004,8 +1113,18 @@ function buildRingList(startCh, startRing){
         if(radius>4000) radius=null; // treat as straight
         ch=interpCH(radius||4001,s.dir);
       }
+      // V Curve Clothoid for TC
+      let cvFinal=0;
+      if(s.type==='CR'){
+        cvFinal=cv;
+      } else if((s.type==='TC'||s.type==='TCo')&&vRv>0){
+        const sPos=s.type==='TCo'?(len-Math.min(sFrac,len)):Math.min(sFrac,len);
+        const A2v=vRv*len;
+        const Rv=sPos>0?Math.round(A2v/sPos):99999;
+        cvFinal=Rv<4000?interpCH(Rv,vDirMap):0;
+      }
       const chPos=+(s.chFrom+i*SEG_W).toFixed(3);
-      list.push({rn,chPos:+chPos.toFixed(1),segType:s.type,radius,ch,dir:s.dir});
+      list.push({rn,chPos,segType:s.type,radius,ch,cv:cvFinal,vDir:s.vDir||'S',dir:s.dir});
       rn++;
     }
   });
@@ -1069,7 +1188,8 @@ function calcPlan(){
 
     const planSegDir = si>=0 ? segs[si].dir : 'S';
     const planCurveDir = info.segType==='ST' ? 'S' : planSegDir;
-    let chosen=bestKeyLookahead(key,hl,vp,info.ch,chFuture,3,planKeyHistory,info.segType,segTypeFuture,planCurveDir);
+    const planVDir=info.vDir||'S';
+    let chosen=bestKeyLookahead(key,hl,vp,info.ch,info.cv||0,chFuture,3,planKeyHistory,info.segType,segTypeFuture,planCurveDir,planVDir);
 
     // Apply ratio bias: ถ้า chosen ขัด bias ให้หา alternative จาก pool
     if(ratioBias && chosen && chosen.k[0]!==(ratioBias==='L'?'L':'R')){
@@ -1090,7 +1210,6 @@ function calcPlan(){
     if(chosen.k[0]==='L') cntL++; else cntR++;
     if(info.segType==='ST') cntS++;
     key=chosen.k;
-    // carry forward: hl หลัง build = hl + sgH (curve บวกใหม่ทุกริงใน getCands)
     hl = +(hl + SEG[chosen.k].h).toFixed(1);
     vp = +(vp + SEG[chosen.k].v).toFixed(1);
   });
@@ -1150,6 +1269,12 @@ function calcPlan(){
       + '<td><span class="zbadge '+bClass+'">'+TYPE_LABEL[r.segType]+'</span></td>'
       + '<td style="color:'+rColor+'">'+rStr+'</td>'
       + '<td style="color:'+chColor+'">'+chStr+'</td>'
+      + (function(){
+          const cvv=r.cv||0;
+          const cvStr=cvv!==0?(cvv>=0?'+':'')+cvv.toFixed(1):'—';
+          const cvColor=cvv===0?'var(--muted)':r.vDir==='U'?'var(--accent)':'var(--accent2)';
+          return '<td style="color:'+cvColor+'">'+cvStr+'</td>';
+        })()
       + '<td style="color:'+kColor(r.key)+';font-weight:bold">'+r.key+'</td>'
       + '<td class="'+vc(r.hl)+'">'+r.hl.toFixed(1)+'</td>'
       + '<td class="'+vc(r.vp)+'">'+r.vp.toFixed(1)+'</td>'
@@ -1162,7 +1287,7 @@ function calcPlan(){
   }).join('');
   document.getElementById('planOut').innerHTML =
     '<div class="kp-scroll"><table class="kp-tbl"><thead><tr>'
-    + '<th>RING</th><th>CHAINAGE</th><th>ZONE</th><th>RADIUS</th><th>*CURVE H</th>'
+    + '<th>RING</th><th>CHAINAGE</th><th>ZONE</th><th>RADIUS</th><th>*CURVE H</th><th>*CURVE V</th>'
     + '<th>KEY</th><th>H LEAD</th><th>V PLUMB</th>'
     + '<th>NEXT KEY</th><th>H AFTER</th><th>V AFTER</th><th>SEG H</th><th>SEG V</th>'
     + '</tr></thead><tbody>'+planRowsHTML+'</tbody></table></div>';
